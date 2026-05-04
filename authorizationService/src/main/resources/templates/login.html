@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" th:href="@{/bootstrap.min.css}">
+    <script th:src="@{/bootstrap.min.js}"></script>
+    <title>Login</title>
+</head>
+<body data-bs-theme="dark">
+<div class="d-flex flex-column align-items-center mt-5">
+    <div class="badge text-primary-emphasis text-wrap mx-auto d-flex align-items-center justify-content-center fs-2" style="width: 20%; height: 50px;">
+        Melon
+    </div>
+    <div class="w-25 mt-5 border rounded-4 p-4">
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show mb-4">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <span class="fw-medium">Authentication Failed</span>
+            <div class="mt-1 fs-7 text-secondary" th:text="${errorMessage}"></div>
+        </div>
+        <form th:action="@{/login}" method="post">
+            <div class="mb-3">
+                <label for="username" class="form-label text-light">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Please enter your username">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label text-light">Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Please enter your password">
+            </div>
+            <button type="submit" class="btn btn-success d-block mx-auto mt-5 w-50 btn-sm">Login</button>
+        </form>
+    </div>
+    <div class="fixed-bottom mt-5 text-wrap mx-auto d-flex align-items-center justify-content-center fs-6 fw-light" style="width: 20%; height: 50px;">
+        Powered By Melon
+    </div>
+</div>
+</body>
+</html>

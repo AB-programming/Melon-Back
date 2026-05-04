@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" th:href="@{/bootstrap.min.css}">
+    <script th:src="@{/bootstrap.min.js}"></script>
+    <title>Consent</title>
+</head>
+<body data-bs-theme="dark">
+<div class="d-flex flex-column align-items-center mt-5">
+    <div class="badge text-primary-emphasis text-wrap mx-auto d-flex align-items-center justify-content-center fs-2"
+         style="width: 50%; height: 50px;">
+        Consent required
+    </div>
+    <p class="mt-3">Melon wants to access your account user</p>
+    <p>The following permissions are requested by the above app.</p>
+    <p>Please review these and consent if you approve.</p>
+    <form th:action="@{/oauth2/authorize}" method="post" class="mt-4">
+        <input type="hidden" name="client_id" th:value="${clientId}">
+        <input type="hidden" name="state" th:value="${state}">
+        <div th:each="scope : ${scopes}" class="form-check align-items-center mb-2">
+            <input class="form-check-input" type="checkbox" name="scope" th:value="${scope}" th:id="${scope}" th:text="${scope}"/><br>
+        </div>
+        <button type="submit" class="btn btn-success d-block mx-auto mt-5 w-100 btn-sm">OK</button>
+    </form>
+    <div class="fixed-bottom mt-5 text-wrap mx-auto d-flex align-items-center justify-content-center fs-6 fw-light" style="width: 20%; height: 50px;">
+        Powered By Melon
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: postService
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/melon?useSSL=false&useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 12345678
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
+
+hdfs:
+  uri: hdfs://localhost:9800
+  user: AB-style
+
+file:
+  maxFileSize: 1024
+  maxRequestSize: 2048
