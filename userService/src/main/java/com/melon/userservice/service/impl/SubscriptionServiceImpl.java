@@ -3,6 +3,7 @@ package com.melon.userservice.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.melon.commonservice.exception.ServerException;
 import com.melon.commonservice.pojo.entity.User;
+import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.userservice.mapper.SubscriptionMapper;
 import com.melon.userservice.mapper.UserMapper;
 import com.melon.userservice.pojo.entity.Subscription;
@@ -10,6 +11,7 @@ import com.melon.userservice.service.SubscriptionService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -67,5 +69,29 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public Long getSubscriptionCount(String userId) {
         LambdaQueryWrapper<Subscription> subscriptionLambdaQueryWrapper = new LambdaQueryWrapper<Subscription>().eq(Subscription::getTarget, userId);
         return subscriptionMapper.selectCount(subscriptionLambdaQueryWrapper);
+    }
+
+    @Override
+    public List<UserVo> getMySubscriptions(String subscriber) {
+        LambdaQueryWrapper<Subscription> wrapper = new LambdaQueryWrapper<Subscription>()
+                .eq(Subscription::getSubscriber, subscriber);
+        List<Subscription> subscriptions = subscriptionMapper.selectList(wrapper);
+        return subscriptions.stream().map(sub -> {
+            User user = userMapper.selectById(sub.getTarget());
+            if (user == null) {
+                return null;
+            }
+            return UserVo.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .nickname(user.getNickname())
+                    .avatarUrl(user.getAvatarUrl())
+                    .signature(user.getSignature())
+                    .introduction(user.getIntroduction())
+                    .residence(user.getResidence())
+                    .interest(user.getInterest())
+                    .gender(user.getGender())
+                    .build();
+        }).filter(Objects::nonNull).toList();
     }
 }
