@@ -3,3 +3,10 @@ spring:
     nacos:
       config:
         server-addr: localhost:8848
+        file-extension: yaml
+        namespace: dev
+        group: DEFAULT_GROUP
+  config:
+    import:
+      - optional:nacos:common.yaml
+      - optional:nacos:videoService.yaml
