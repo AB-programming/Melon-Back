@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: userService
+            uri: lb://userService
+            predicates:
+              - Path=/user/**
+            filters:
+              - RewritePath=/user, /
+          - id: authorizationService
+            uri: lb://authorizationService
+            predicates:
+              - Path=/oauth2/authorize, /oauth2/token, /oauth2/consent, /introspect, /logout, /login
+          - id: videoService
+            uri: lb://videoService
+            predicates:
+              - Path=/video/**
+            filters:
+              - RewritePath=/video, /
+          - id: postService
+            uri: lb://postService
+            predicates:
+              - Path=/post/**
+            filters:
+              - RewritePath=/post, /

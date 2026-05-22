@@ -8,5 +8,5 @@ spring:
         group: DEFAULT_GROUP
   config:
     import:
-      - optional:nacos:common.yaml
       - optional:nacos:postService.yaml
+      - optional:nacos:common.yaml

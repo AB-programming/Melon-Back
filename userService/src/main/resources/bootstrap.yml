@@ -3,7 +3,10 @@ spring:
     nacos:
       config:
         server-addr: localhost:8848
-
-staticLocation: file:${uploadLocation}
-uploadLocation: F:/project/Melon/backend/userService/src/main/resources/static/ # Replace with your project location
-staticUrl: http://localhost:8080/user/static/
+        file-extension: yaml
+        namespace: dev
+        group: DEFAULT_GROUP
+  config:
+    import:
+      - optional:nacos:userService.yaml
+      - optional:nacos:common.yaml

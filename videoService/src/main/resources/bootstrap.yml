@@ -8,5 +8,5 @@ spring:
         group: DEFAULT_GROUP
   config:
     import:
-      - optional:nacos:common.yaml
       - optional:nacos:videoService.yaml
+      - optional:nacos:common.yaml
