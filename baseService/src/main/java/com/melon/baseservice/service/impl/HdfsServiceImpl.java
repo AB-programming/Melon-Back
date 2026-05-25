@@ -51,4 +51,9 @@ public class HdfsServiceImpl implements HdfsService {
             throw new RuntimeException("Failed to delete file: " + path, e);
         }
     }
+
+    @Override
+    public FSDataOutputStream createOutputStream(String path) throws IOException {
+        return fs.create(new Path(path));
+    }
 }
