@@ -16,6 +16,7 @@ Required environment
 - MySQL
 - Nacos
 - Hadoop HDFS
+- Redis
 
 ## Nacos Config
 This microservices project utilizes Nacos for configuration management. It operates within the 'dev' namespace, with all configurations belonging to the DEFAULT_GROUP. Configuration files reside in the nacos-config directory, maintaining consistent filenames with their counterparts in Nacos.

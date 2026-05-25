@@ -19,7 +19,7 @@ public class RedisConfig {
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
-        return this.redisTemplate(0);
+        return this.redisTemplate(redisProperties.getDatabase());
     }
 
     public RedisTemplate<String, Object> redisTemplate(int database) {
