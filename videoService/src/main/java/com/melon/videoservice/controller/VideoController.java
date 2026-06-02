@@ -79,4 +79,10 @@ public class VideoController {
     public Boolean merge(@RequestBody ChunkDto chunkDto) throws ServerException {
         return videoService.merge(chunkDto.getFileMd5(), chunkDto.getId());
     }
+
+    @GetMapping("/checkMerge/{fileId}")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public String checkMerge(@PathVariable("fileId") String fileId) {
+        return videoService.checkMergeResult(fileId);
+    }
 }

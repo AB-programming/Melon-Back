@@ -10,6 +10,7 @@ import com.melon.videoservice.mapper.VideoMapper;
 import com.melon.videoservice.pojo.entity.Video;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.remote.UserRemote;
+import com.melon.videoservice.service.MergeProducer;
 import com.melon.videoservice.service.VideoService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,6 +43,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Resource
+    private MergeProducer mergeProducer;
 
     @Override
     public String createVideo(MultipartFile pictureFile, String userId, String title, String description) throws ServerException {
@@ -214,44 +218,18 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public Boolean merge(String fileMd5, String id) throws ServerException {
-        String dirPath = System.getProperty("user.dir")
-                + File.separator
-                + "upload-temp"
-                + File.separator
-                + fileMd5;
-        File chunkDir = new File(dirPath);
-        File[] chunkFiles = chunkDir.listFiles();
-        Arrays.sort(Objects.requireNonNull(chunkFiles),
-                Comparator.comparingInt(file ->
-                        Integer.parseInt(file.getName().replace(".part", ""))
-                ));
+        mergeProducer.sendMergeMessage(fileMd5, id);
+        return true;
+    }
 
-        String uploadPath = System.getProperty("user.dir")
-                + File.separator
-                + "upload";
-        File dir = new File(uploadPath);
-
-        if (!dir.exists()) {
-            dir.mkdir();
+    @Override
+    public String checkMergeResult(String fileId) {
+        String key = "merge:status:" + fileId;
+        String status = (String) redisTemplate.opsForValue().get(key);
+        if (Objects.isNull(status) || status.isEmpty()) {
+            return "FAILED";
         }
-
-        String mergePath = "/video/" + id + ".mp4";
-
-        byte[] buffer = new byte[256 * 1024];
-        try(FSDataOutputStream bos = hdfsService.createOutputStream(mergePath)) {
-            for (File chunkFile : chunkFiles) {
-                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(chunkFile));
-                int len;
-                while ((len = bis.read(buffer)) != -1) {
-                    bos.write(buffer, 0, len);
-                }
-            }
-            bos.hflush();
-            bos.hsync();
-            return true;
-        } catch (IOException e) {
-            throw new ServerException("File merge failed, please try again");
-        }
+        return status;
     }
 
     public List<VideoVo> convertVideoListToVideoVoList(List<Video> videoList) throws ServerException {

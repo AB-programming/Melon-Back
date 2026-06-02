@@ -20,4 +20,5 @@ public interface VideoService {
     Boolean uploadChunk(MultipartFile chunk, Integer index, String fileMd5) throws ServerException;
     Set<Object> check(String fileMd5) throws ServerException;
     Boolean merge(String fileMd5, String id) throws ServerException;
+    String checkMergeResult(String fileId);
 }
