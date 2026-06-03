@@ -13,10 +13,14 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Component
 @RocketMQMessageListener(topic = "video-merge-topic", consumerGroup = "merge-consumer-group")
@@ -30,7 +34,6 @@ public class MergeConsumer implements RocketMQListener<MergeMessage> {
     @Override
     public void onMessage(MergeMessage mergeMessage) {
         String key = "merge:status:" + mergeMessage.getFileId();
-        redisTemplate.opsForValue().set(key, "MERGING");
         String dirPath = System.getProperty("user.dir")
                 + File.separator
                 + "upload-temp"
@@ -38,21 +41,24 @@ public class MergeConsumer implements RocketMQListener<MergeMessage> {
                 + mergeMessage.getFileMd5();
         File chunkDir = new File(dirPath);
         File[] chunkFiles = chunkDir.listFiles();
-        Arrays.sort(Objects.requireNonNull(chunkFiles),
+        if (Objects.isNull(chunkFiles)) {
+            return;
+        }
+        Arrays.sort(chunkFiles,
                 Comparator.comparingInt(file ->
                         Integer.parseInt(file.getName().replace(".part", ""))
                 ));
 
         String mergePath = "/video/" + mergeMessage.getFileId() + ".mp4";
 
-        boolean flag = false;
         byte[] buffer = new byte[256 * 1024];
         try (FSDataOutputStream bos = hdfsService.createOutputStream(mergePath)) {
             for (File chunkFile : chunkFiles) {
-                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(chunkFile));
-                int len;
-                while ((len = bis.read(buffer)) != -1) {
-                    bos.write(buffer, 0, len);
+                try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(chunkFile))) {
+                    int len;
+                    while ((len = bis.read(buffer)) != -1) {
+                        bos.write(buffer, 0, len);
+                    }
                 }
             }
             bos.hflush();
@@ -62,10 +68,30 @@ public class MergeConsumer implements RocketMQListener<MergeMessage> {
             redisTemplate.expire(key, Duration.ofMinutes(10));
             // delete upload chunk cache
             redisTemplate.delete("upload:chunks:" + mergeMessage.getFileMd5());
-            flag = true;
+            deleteChunkDir(dirPath);
         } catch (IOException e) {
             // merge failed
             redisTemplate.opsForValue().set(key, "FAILED");
+        }
+    }
+
+    public void deleteChunkDir(String dir) {
+        Path deletePath = Paths.get(dir);
+        if (!Files.exists(deletePath)) {
+            return;
+        }
+
+        try (Stream<Path> paths = Files.walk(deletePath)) {
+            paths.sorted(Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+        } catch (IOException e) {
+            System.out.println("Deleting the partitioned directory failed:" + e.getMessage());
         }
     }
 }

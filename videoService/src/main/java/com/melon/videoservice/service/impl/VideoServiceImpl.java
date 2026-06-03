@@ -211,13 +211,15 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
-    public Set<Object> check(String fileMd5) throws ServerException {
+    public Set<Object> check(String fileMd5) {
         String key = "upload:chunks:" + fileMd5;
         return redisTemplate.opsForSet().members(key);
     }
 
     @Override
-    public Boolean merge(String fileMd5, String id) throws ServerException {
+    public Boolean merge(String fileMd5, String id) {
+        String key = "merge:status:" + id;
+        redisTemplate.opsForValue().set(key, "MERGING");
         mergeProducer.sendMergeMessage(fileMd5, id);
         return true;
     }
@@ -232,7 +234,7 @@ public class VideoServiceImpl implements VideoService {
         return status;
     }
 
-    public List<VideoVo> convertVideoListToVideoVoList(List<Video> videoList) throws ServerException {
+    public List<VideoVo> convertVideoListToVideoVoList(List<Video> videoList) {
         return videoList.parallelStream()
                 .map(video -> {
                     VideoVo.VideoVoBuilder builder = VideoVo.builder()

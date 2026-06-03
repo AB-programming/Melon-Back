@@ -18,7 +18,7 @@ public interface VideoService {
     VideoVo getVideoInfoById(String videoId) throws ServerException;
     List<VideoVo> selectVideoListByUserId(String userId) throws ServerException;
     Boolean uploadChunk(MultipartFile chunk, Integer index, String fileMd5) throws ServerException;
-    Set<Object> check(String fileMd5) throws ServerException;
-    Boolean merge(String fileMd5, String id) throws ServerException;
+    Set<Object> check(String fileMd5);
+    Boolean merge(String fileMd5, String id);
     String checkMergeResult(String fileId);
 }

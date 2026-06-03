@@ -5,6 +5,8 @@ import jakarta.annotation.Resource;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 public class MergeProducer {
 
@@ -15,6 +17,7 @@ public class MergeProducer {
         MergeMessage message = MergeMessage.builder()
                 .fileMd5(fileMd5)
                 .fileId(fileId)
+                .sendTime(LocalDateTime.now())
                 .build();
         rocketMQTemplate.syncSend("video-merge-topic", message);
     }
