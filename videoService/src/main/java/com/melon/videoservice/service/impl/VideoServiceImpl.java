@@ -10,11 +10,14 @@ import com.melon.videoservice.mapper.VideoMapper;
 import com.melon.videoservice.pojo.entity.Video;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.remote.UserRemote;
+import com.melon.videoservice.service.MergeProducer;
 import com.melon.videoservice.service.VideoService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.IOUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +26,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.io.*;
+import java.time.Duration;
+import java.util.*;
 
 @Service
 public class VideoServiceImpl implements VideoService {
@@ -39,18 +41,23 @@ public class VideoServiceImpl implements VideoService {
     @Resource
     private UserRemote userRemote;
 
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Resource
+    private MergeProducer mergeProducer;
+
     @Override
-    public String createVideo(MultipartFile videoFile, MultipartFile pictureFile, String userId, String title, String description) throws ServerException {
-        String videoExtension = StringUtils.getFilenameExtension(videoFile.getOriginalFilename());
+    public String createVideo(MultipartFile pictureFile, String userId, String title, String description) throws ServerException {
         String pictureExtension = StringUtils.getFilenameExtension(pictureFile.getOriginalFilename());
         String id = UUID.randomUUID().toString();
-        String videoPath = "/video/" + id + "." + videoExtension;
         String picturePath = "/cover/" + id + "." + pictureExtension;
+        String videoPath = "/video/" + id + ".mp4";
         Video video = Video.builder()
                 .id(id)
                 .userId(userId)
-                .videoPath(videoPath)
                 .picturePath(picturePath)
+                .videoPath(videoPath)
                 .title(title)
                 .description(description)
                 .build();
@@ -58,7 +65,6 @@ public class VideoServiceImpl implements VideoService {
             throw new ServerException("The video was not uploaded successfully. Please try again later.");
         }
         try {
-            hdfsService.upload(videoPath, videoFile.getInputStream());
             hdfsService.upload(picturePath, pictureFile.getInputStream());
         } catch (IOException e) {
             throw new ServerException("Failed to upload the video.");
@@ -113,7 +119,7 @@ public class VideoServiceImpl implements VideoService {
                 byte[] buf = new byte[8 * 1024];
                 long toRead = chunkSize;
                 int len;
-                while (toRead > 0 && (len = in.read(buf, 0, (int)Math.min(buf.length, toRead))) != -1) {
+                while (toRead > 0 && (len = in.read(buf, 0, (int) Math.min(buf.length, toRead))) != -1) {
                     output.write(buf, 0, len);
                     toRead -= len;
                 }
@@ -173,7 +179,62 @@ public class VideoServiceImpl implements VideoService {
         return this.convertVideoListToVideoVoList(videoList);
     }
 
-    public List<VideoVo> convertVideoListToVideoVoList(List<Video> videoList) throws ServerException {
+    @Override
+    public Boolean uploadChunk(MultipartFile chunk, Integer index, String fileMd5) throws ServerException {
+        // Avoid duplicate uploads
+        String key = "upload:chunks:" + fileMd5;
+        Boolean isUploaded = redisTemplate.opsForSet().isMember(key, index);
+        if (Boolean.TRUE.equals(isUploaded)) {
+            // chunk has exists
+            return true;
+        }
+        String chunkDir = System.getProperty("user.dir")
+                + File.separator
+                + "upload-temp"
+                + File.separator
+                + fileMd5;
+        File dir = new File(chunkDir);
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        File chunkFile = new File(dir, index + ".part");
+        try {
+            chunk.transferTo(chunkFile);
+            // Add this shard to the cache
+            redisTemplate.opsForSet().add(key, index);
+            // setup expire
+            redisTemplate.expire(key, Duration.ofHours(12));
+        } catch (IOException e) {
+            throw new ServerException("Chunk upload failed.");
+        }
+        return true;
+    }
+
+    @Override
+    public Set<Object> check(String fileMd5) {
+        String key = "upload:chunks:" + fileMd5;
+        return redisTemplate.opsForSet().members(key);
+    }
+
+    @Override
+    public Boolean merge(String fileMd5, String id) {
+        String key = "merge:status:" + id;
+        redisTemplate.opsForValue().set(key, "MERGING");
+        mergeProducer.sendMergeMessage(fileMd5, id);
+        return true;
+    }
+
+    @Override
+    public String checkMergeResult(String fileId) {
+        String key = "merge:status:" + fileId;
+        String status = (String) redisTemplate.opsForValue().get(key);
+        if (Objects.isNull(status) || status.isEmpty()) {
+            return "FAILED";
+        }
+        return status;
+    }
+
+    public List<VideoVo> convertVideoListToVideoVoList(List<Video> videoList) {
         return videoList.parallelStream()
                 .map(video -> {
                     VideoVo.VideoVoBuilder builder = VideoVo.builder()

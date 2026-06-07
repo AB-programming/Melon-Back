@@ -1,6 +1,6 @@
-package com.melon.authorizationservice.config;
+package com.melon.baseservice.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -14,21 +14,12 @@ import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
 public class RedisConfig {
-    @Value("${dev.redis.host}")
-    private String host;
-
-    @Value("${dev.redis.port}")
-    private int port;
-
-    @Value("${dev.redis.maxTotal}")
-    private int maxTotal;
-
-    @Value("${dev.redis.maxIdle}")
-    private int maxIdle;
+    @Resource
+    private RedisProperties redisProperties;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
-        return this.redisTemplate(0);
+        return this.redisTemplate(redisProperties.getDatabase());
     }
 
     public RedisTemplate<String, Object> redisTemplate(int database) {
@@ -43,12 +34,12 @@ public class RedisConfig {
     }
 
     RedisConnectionFactory redisConnectionFactory(int database) {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisProperties.getHost(), redisProperties.getPort());
 //        config.setPassword(password);
         config.setDatabase(database);
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxTotal(maxTotal);
-        jedisPoolConfig.setMaxIdle(maxIdle);
+        jedisPoolConfig.setMaxTotal(redisProperties.getMaxTotal());
+        jedisPoolConfig.setMaxIdle(redisProperties.getMaxIdle());
         jedisPoolConfig.setTestOnBorrow(false);
         jedisPoolConfig.setTestOnReturn(false);
         JedisClientConfiguration jedisClientConfiguration = JedisClientConfiguration.builder().usePooling().poolConfig(

@@ -1,18 +1,22 @@
 package com.melon.videoservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.videoservice.pojo.dto.ChunkDto;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.service.VideoService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 public class VideoController {
@@ -21,12 +25,12 @@ public class VideoController {
 
     @PostMapping("/createVideo")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public String createVideo(@RequestParam("video") MultipartFile video,
-                              @RequestParam("picture") MultipartFile picture,
-                              @RequestParam("userId") String userId,
-                              @RequestParam("title") String title,
+    @Validated
+    public String createVideo(@RequestParam("picture") MultipartFile picture,
+                              @RequestParam("userId") @NotBlank(message = "The userId cannot be empty") String userId,
+                              @RequestParam("title") @NotBlank(message = "The title cannot be empty") String title,
                               @RequestParam("description") String description) throws ServerException {
-        return videoService.createVideo(video, picture, userId, title, description);
+        return videoService.createVideo(picture, userId, title, description);
     }
 
     @GetMapping("/{videoId}")
@@ -55,5 +59,33 @@ public class VideoController {
     @GetMapping("/selectVideoListByUserId")
     public List<VideoVo> selectVideoListByUserId(@RequestParam("userId") String userId) throws ServerException {
         return videoService.selectVideoListByUserId(userId);
+    }
+
+    @PostMapping("/uploadChunk")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public Boolean uploadChunk(
+            @RequestParam("chunk") MultipartFile chunk,
+            @RequestParam("index") Integer index,
+            @RequestParam("fileMd5") String fileMd5
+    ) throws ServerException {
+        return videoService.uploadChunk(chunk, index, fileMd5);
+    }
+
+    @PostMapping("/check")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public Set<Object> check(@RequestBody ChunkDto chunkDto) throws ServerException {
+        return videoService.check(chunkDto.getFileMd5());
+    }
+
+    @PostMapping("/merge")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public Boolean merge(@RequestBody ChunkDto chunkDto) throws ServerException {
+        return videoService.merge(chunkDto.getFileMd5(), chunkDto.getId());
+    }
+
+    @GetMapping("/checkMerge/{fileId}")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public String checkMerge(@PathVariable("fileId") String fileId) {
+        return videoService.checkMergeResult(fileId);
     }
 }
