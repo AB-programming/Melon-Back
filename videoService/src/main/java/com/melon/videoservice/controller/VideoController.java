@@ -6,9 +6,11 @@ import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.service.VideoService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -23,9 +25,10 @@ public class VideoController {
 
     @PostMapping("/createVideo")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
+    @Validated
     public String createVideo(@RequestParam("picture") MultipartFile picture,
-                              @RequestParam("userId") String userId,
-                              @RequestParam("title") String title,
+                              @RequestParam("userId") @NotBlank(message = "The userId cannot be empty") String userId,
+                              @RequestParam("title") @NotBlank(message = "The title cannot be empty") String title,
                               @RequestParam("description") String description) throws ServerException {
         return videoService.createVideo(picture, userId, title, description);
     }

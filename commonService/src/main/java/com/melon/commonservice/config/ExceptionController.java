@@ -3,6 +3,7 @@ package com.melon.commonservice.config;
 import com.melon.commonservice.common.HttpResponseStatus;
 import com.melon.commonservice.common.HttpResult;
 import com.melon.commonservice.exception.ServerException;
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -11,9 +12,14 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ExceptionController {
@@ -105,6 +111,20 @@ public class ExceptionController {
                 .code(HttpResponseStatus.BAD_REQUEST.getCode())
                 .message(HttpResponseStatus.BAD_REQUEST.getMessage())
                 .data(defaultMessage)
+                .build();
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public HttpResult<String> handlerMethodValidationException(HandlerMethodValidationException e) {
+        List<String> messages = e.getAllErrors().stream()
+                .map(MessageSourceResolvable::getDefaultMessage)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return HttpResult.<String>builder()
+                .code(HttpResponseStatus.BAD_REQUEST.getCode())
+                .message(HttpResponseStatus.BAD_REQUEST.getMessage())
+                .data(String.join(",", messages))
                 .build();
     }
 }
