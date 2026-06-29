@@ -248,7 +248,7 @@ public class VideoServiceImpl implements VideoService {
             return false;
         }
         if (StringUtils.hasText(video.getVideoPath()) && StringUtils.hasText(video.getPicturePath())) {
-            deleteVideoProducer.sendDeleteMessage(video.getVideoPath(), video.getPicturePath());
+            deleteVideoProducer.sendDeleteMessage(videoId, video.getVideoPath(), video.getPicturePath());
         }
         return true;
     }

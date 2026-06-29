@@ -10,8 +10,9 @@ public class DeleteVideoProducer {
     @Resource
     private RocketMQTemplate rocketMQTemplate;
 
-    public void sendDeleteMessage(String videoPath, String coverPath) {
+    public void sendDeleteMessage(String videoId, String videoPath, String coverPath) {
         DeleteVideoMessage message = DeleteVideoMessage.builder()
+                .videoId(videoId)
                 .videoPath(videoPath)
                 .coverPath(coverPath)
                 .build();

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeleteVideoMessage {
+    private String videoId;
     private String videoPath;
     private String coverPath;
 }
