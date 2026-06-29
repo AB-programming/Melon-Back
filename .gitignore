@@ -4,3 +4,4 @@ upload/*
 !upload/.gitkeep
 upload-temp/*
 !upload-temp/.gitkeep
+logs/
