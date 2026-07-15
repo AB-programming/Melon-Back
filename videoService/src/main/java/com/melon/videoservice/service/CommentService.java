@@ -8,7 +8,7 @@ import java.util.List;
 public interface CommentService {
     CommentVo addComment(String userId, String videoId, String content) throws ServerException;
 
-    List<CommentVo> getCommentListByUserIdAndVideoId(String userId, String videoId);
+    List<CommentVo> getCommentListByUserIdAndVideoId(String userId, String videoId) throws ServerException;
 
     void deleteCommentByCommentId(String commentId) throws ServerException;
 }

@@ -9,5 +9,6 @@ public class ReplyDto {
     private String userId;
     private String type;
     private String targetId;
+    private String commentId;
     private String content;
 }

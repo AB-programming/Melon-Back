@@ -10,14 +10,16 @@ import com.melon.userservice.service.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -120,5 +122,27 @@ public class UserServiceImpl implements UserService {
                 .id(id)
                 .username(user.getUsername())
                 .build();
+    }
+
+    @Override
+    public Map<String, UserVo> getUserListByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        return userMapper.selectByIds(ids)
+                .stream()
+                .map(user -> UserVo.builder()
+                        .id(user.getId())
+                        .avatarUrl(user.getAvatarUrl())
+                        .username(user.getUsername())
+                        .signature(user.getSignature())
+                        .nickname(user.getNickname())
+                        .introduction(user.getIntroduction())
+                        .residence(user.getResidence())
+                        .gender(user.getGender())
+                        .interest(user.getInterest())
+                        .build())
+                .distinct()
+                .collect(Collectors.toMap(UserVo::getId, Function.identity()));
     }
 }

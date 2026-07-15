@@ -19,6 +19,8 @@ public class Reply {
     private String id;
     private String userId;
     private String targetId;
+    private String targetUserId;
+    private String commentId;
     private String type;
     private String content;
     private LocalDateTime createdTime;

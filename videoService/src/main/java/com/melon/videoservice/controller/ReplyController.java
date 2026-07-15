@@ -27,6 +27,7 @@ public class ReplyController {
         return replyService.addReply(replyDto.getUserId(),
                 replyDto.getType(),
                 replyDto.getTargetId(),
+                replyDto.getCommentId(),
                 replyDto.getContent());
     }
 }

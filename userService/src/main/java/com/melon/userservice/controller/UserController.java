@@ -13,6 +13,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 public class UserController {
     @Resource
@@ -39,5 +42,10 @@ public class UserController {
     @PostMapping("/createUser")
     public UserVo createUser(@RequestBody @Validated NewUserDto newUserDto) throws ServerException {
         return userService.createUser(newUserDto.getUsername(), newUserDto.getPassword());
+    }
+
+    @GetMapping("/getUserListByIds")
+    public Map<String, UserVo> getUserListByIds(@RequestParam("ids") List<String> ids) {
+        return userService.getUserListByIds(ids);
     }
 }
