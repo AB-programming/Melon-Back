@@ -63,13 +63,15 @@ public class ReplyServiceImpl implements ReplyService {
         if (replyMapper.insert(reply) <= 0) {
             throw new ServerException("Reply failed, please try again");
         }
-        HttpResult<UserVo> result = userRemote.getUserById(userId);
+        HttpResult<UserVo> userResult = userRemote.getUserById(userId);
+        HttpResult<UserVo> targetUserResult = userRemote.getUserById(targetUserId);
         return ReplyVo.builder()
                 .id(id)
-                .user(result.getData())
+                .user(userResult.getData())
                 .type(type)
                 .content(content)
                 .targetId(targetId)
+                .targetUser(targetUserResult.getData())
                 .createdTime(dateTime.format(formatter))
                 .build();
     }

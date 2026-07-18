@@ -117,17 +117,20 @@ public class CommentServiceImpl implements CommentService {
                     }
                     // query replies under this comment
                     List<Reply> replies = replyMapper.selectList(new LambdaQueryWrapper<Reply>().eq(Reply::getCommentId, comment.getId()));
-                    List<ReplyVo> replyVoList = replies.stream().map(reply -> {
-                        ReplyVo.ReplyVoBuilder replyVoBuilder = ReplyVo.builder();
-                        replyVoBuilder.id(reply.getId())
-                                .type(reply.getType())
-                                .user(userMap.get(reply.getUserId()))
-                                .targetId(reply.getTargetId())
-                                .targetUser(userMap.get(reply.getTargetUserId()))
-                                .content(reply.getContent())
-                                .createdTime(reply.getCreatedTime().format(formatter));
-                        return replyVoBuilder.build();
-                    }).toList();
+                    List<ReplyVo> replyVoList = replies.stream()
+                            .sorted(Comparator.comparing(Reply::getCreatedTime).reversed())
+                            .map(reply -> {
+                                ReplyVo.ReplyVoBuilder replyVoBuilder = ReplyVo.builder();
+                                replyVoBuilder.id(reply.getId())
+                                        .type(reply.getType())
+                                        .user(userMap.get(reply.getUserId()))
+                                        .targetId(reply.getTargetId())
+                                        .targetUser(userMap.get(reply.getTargetUserId()))
+                                        .content(reply.getContent())
+                                        .createdTime(reply.getCreatedTime().format(formatter));
+                                return replyVoBuilder.build();
+                            })
+                            .toList();
                     builder.replyList(replyVoList);
                     return builder.build();
                 }).toList();
