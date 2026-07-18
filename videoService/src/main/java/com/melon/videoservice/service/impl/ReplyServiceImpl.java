@@ -82,4 +82,11 @@ public class ReplyServiceImpl implements ReplyService {
         replyLambdaQueryWrapper.allEq(Map.of(Reply::getUserId, userId, Reply::getTargetId, targetId, Reply::getType, type));
         return replyMapper.exists(replyLambdaQueryWrapper);
     }
+
+    @Override
+    public void deleteReplyByReplyId(String replyId) throws ServerException {
+        if (replyMapper.deleteById(replyId) <= 0) {
+            throw new ServerException("Failed to delete the reply, please try again later");
+        }
+    }
 }
