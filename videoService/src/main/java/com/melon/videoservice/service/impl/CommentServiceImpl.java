@@ -15,6 +15,7 @@ import com.melon.videoservice.pojo.vo.CommentVo;
 import com.melon.videoservice.pojo.vo.ReplyVo;
 import com.melon.videoservice.remote.UserRemote;
 import com.melon.videoservice.service.CommentService;
+import com.melon.videoservice.service.DeleteCommentProducer;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -37,6 +38,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Resource
     private ReplyMapper replyMapper;
+
+    @Resource
+    private DeleteCommentProducer deleteCommentProducer;
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -141,5 +145,6 @@ public class CommentServiceImpl implements CommentService {
         if (commentMapper.deleteById(commentId) <= 0) {
             throw new ServerException("Failed to delete the comment, please try again later");
         }
+        deleteCommentProducer.sendDeleteCommentMessage(commentId);
     }
 }
