@@ -50,6 +50,12 @@ public class PostController {
         return postService.selectPostListWithUserId(userId);
     }
 
+    @GetMapping("/selectFollowedPosts")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public List<PostVo> selectFollowedPosts(@RequestParam("userId") String userId) throws ServerException {
+        return postService.selectFollowedPosts(userId);
+    }
+
     @DeleteMapping("/{postId}")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void deletePost(@PathVariable String postId) throws ServerException {

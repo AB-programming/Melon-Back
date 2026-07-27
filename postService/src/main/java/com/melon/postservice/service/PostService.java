@@ -13,6 +13,7 @@ public interface PostService {
     StreamingResponseBody getPostImage(String imageUrl, HttpServletResponse response) throws ServerException;
     List<PostVo> selectAllPost();
     List<PostVo> selectPostListWithUserId(String userId);
+    List<PostVo> selectFollowedPosts(String userId) throws ServerException;
     void deletePost(String postId) throws ServerException;
     PostVo getPostById(String postId) throws ServerException;
     PostVo getPostByIdWithUserId(String postId, String userId) throws ServerException;
