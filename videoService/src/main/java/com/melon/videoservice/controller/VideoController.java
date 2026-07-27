@@ -88,4 +88,10 @@ public class VideoController {
     public String checkMerge(@PathVariable("fileId") String fileId) {
         return videoService.checkMergeResult(fileId);
     }
+
+    @DeleteMapping("/{videoId}")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public Boolean deleteVideo(@PathVariable("videoId") String videoId) {
+        return videoService.deleteVideo(videoId);
+    }
 }

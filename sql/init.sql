@@ -78,12 +78,14 @@ CREATE TABLE `comment_like`
 DROP TABLE IF EXISTS `reply`;
 CREATE TABLE `reply`
 (
-    `id`           VARCHAR(255),
-    `user_id`      VARCHAR(255) NOT NULL,
-    `target_id`    VARCHAR(255) NOT NULL,
-    `type`         CHAR(1)      NOT NULL,
-    `content`      TEXT         NOT NULL,
-    `created_time` DATETIME     NOT NULL,
+    `id`             VARCHAR(255),
+    `user_id`        VARCHAR(255) NOT NULL,
+    `target_id`      VARCHAR(255) NOT NULL,
+    `target_user_id` VARCHAR(255) NOT NULL,
+    `comment_id`     VARCHAR(255) NOT NULL,
+    `type`           CHAR(1)      NOT NULL,
+    `content`        TEXT         NOT NULL,
+    `created_time`   DATETIME     NOT NULL,
     PRIMARY KEY (`id`)
 );
 

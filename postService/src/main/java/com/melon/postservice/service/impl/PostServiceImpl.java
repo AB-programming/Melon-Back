@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class PostServiceImpl implements PostService {
@@ -122,6 +124,44 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public List<PostVo> selectFollowedPosts(String userId) throws ServerException {
+        HttpResult<List<UserVo>> userResult = userRemote.getMySubscriptions(userId);
+        if (HttpResponseStatus.OK.getCode() != userResult.getCode()) {
+            throw new ServerException("Failed to fetch subscriptions.");
+        }
+        List<UserVo> followedUsers = userResult.getData();
+        List<String> followedIds = followedUsers.stream().map(UserVo::getId).toList();
+        if (followedIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        // user list convert to user map
+        Map<String, UserVo> userMap = followedUsers.stream()
+                .collect(Collectors.toMap(UserVo::getId, Function.identity()));
+
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(Post::getUserId, followedIds).orderByDesc(Post::getCreatedTime);
+        return postMapper.selectList(wrapper)
+                .stream()
+                .map(post -> {
+                    PostVo.PostVoBuilder builder = PostVo.builder();
+                    UserVo user = userMap.get(post.getUserId());
+                    if (Objects.nonNull(user)) {
+                        builder.user(user);
+                    }
+                    builder.isLike(postLikeMapper.exists(new LambdaQueryWrapper<PostLike>()
+                            .allEq(Map.of(PostLike::getUserId, userId, PostLike::getPostId, post.getId()))));
+                    Long likeCount = postLikeMapper.selectCount(new LambdaQueryWrapper<PostLike>().eq(PostLike::getPostId, post.getId()));
+                    return builder
+                            .id(post.getId())
+                            .content(post.getContent())
+                            .images(Arrays.stream(post.getImages().split(";")).toList())
+                            .createdTime(post.getCreatedTime().format(formatter))
+                            .likeCount(likeCount)
+                            .build();
+                }).toList();
+    }
+
+    @Override
     public void deletePost(String postId) throws ServerException {
         Post post = postMapper.selectById(postId);
         if (Objects.isNull(post)) {
@@ -173,9 +213,9 @@ public class PostServiceImpl implements PostService {
                 .build();
     }
 
-    /*
-     *  selectPostList by userId, userId can be empty
-     * */
+    /**
+     * selectPostList by userId, userId can be empty
+     */
     private List<PostVo> selectPostList(String userId) {
         LambdaQueryWrapper<Post> postLambdaQueryWrapper = new LambdaQueryWrapper<>();
         postLambdaQueryWrapper.orderByDesc(Post::getCreatedTime);

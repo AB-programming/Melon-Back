@@ -4,6 +4,8 @@ import com.melon.commonservice.pojo.vo.UserVo;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Builder
 public class CommentVo {
@@ -13,4 +15,5 @@ public class CommentVo {
     private String createdTime;
     private Long likeCount;
     private Boolean isLiked;
+    private List<ReplyVo> replyList;
 }

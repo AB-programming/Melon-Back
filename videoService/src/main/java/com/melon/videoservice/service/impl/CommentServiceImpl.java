@@ -7,20 +7,23 @@ import com.melon.commonservice.exception.ServerException;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.videoservice.mapper.CommentLikeMapper;
 import com.melon.videoservice.mapper.CommentMapper;
+import com.melon.videoservice.mapper.ReplyMapper;
 import com.melon.videoservice.pojo.entity.Comment;
 import com.melon.videoservice.pojo.entity.CommentLike;
+import com.melon.videoservice.pojo.entity.Reply;
 import com.melon.videoservice.pojo.vo.CommentVo;
+import com.melon.videoservice.pojo.vo.ReplyVo;
 import com.melon.videoservice.remote.UserRemote;
 import com.melon.videoservice.service.CommentService;
+import com.melon.videoservice.service.DeleteCommentProducer;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -32,6 +35,12 @@ public class CommentServiceImpl implements CommentService {
 
     @Resource
     private UserRemote userRemote;
+
+    @Resource
+    private ReplyMapper replyMapper;
+
+    @Resource
+    private DeleteCommentProducer deleteCommentProducer;
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -60,12 +69,37 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentVo> getCommentListByUserIdAndVideoId(String userId, String videoId) {
+    public List<CommentVo> getCommentListByUserIdAndVideoId(String userId, String videoId) throws ServerException {
         LambdaQueryWrapper<Comment> commentLambdaQueryWrapper =
                 new LambdaQueryWrapper<Comment>()
                         .eq(Comment::getVideoId, videoId)
                         .orderByDesc(Comment::getCreatedTime);
         List<Comment> commentList = commentMapper.selectList(commentLambdaQueryWrapper);
+        List<String> commentUserIds = commentList.stream()
+                .map(Comment::getUserId)
+                .toList();
+        List<String> commentIds = commentList.stream()
+                .map(Comment::getId)
+                .toList();
+        List<Reply> replyList = Collections.emptyList();
+        if (!CollectionUtils.isEmpty(commentIds)) {
+            replyList = replyMapper.selectList(new LambdaQueryWrapper<Reply>().in(Reply::getCommentId, commentIds));
+        }
+        List<String> replyUserIds = replyList.stream()
+                .map(Reply::getUserId)
+                .toList();
+        List<String> replyTargetUserIds = replyList.stream()
+                .map(Reply::getTargetUserId)
+                .toList();
+        List<String> userIds = Stream.of(commentUserIds, replyUserIds, replyTargetUserIds)
+                .flatMap(Collection::stream)
+                .distinct()
+                .toList();
+        HttpResult<Map<String, UserVo>> userMapResult = userRemote.getUserListByIds(userIds);
+        if (!userMapResult.getCode().equals(HttpResponseStatus.OK.getCode())) {
+            throw new ServerException("user module exception");
+        }
+        Map<String, UserVo> userMap = userMapResult.getData();
         return commentList.parallelStream()
                 .map(comment -> {
                     Long likeCount = commentLikeMapper.selectCount(new LambdaQueryWrapper<CommentLike>()
@@ -81,10 +115,27 @@ public class CommentServiceImpl implements CommentService {
                             .likeCount(likeCount)
                             .isLiked(isLiked)
                             .createdTime(comment.getCreatedTime().format(formatter));
-                    HttpResult<UserVo> result = userRemote.getUserById(comment.getUserId());
-                    if (result.getCode().equals(HttpResponseStatus.OK.getCode())) {
-                        builder.user(result.getData());
+                    UserVo userVo = userMap.get(comment.getUserId());
+                    if (Objects.nonNull(userVo)) {
+                        builder.user(userVo);
                     }
+                    // query replies under this comment
+                    List<Reply> replies = replyMapper.selectList(new LambdaQueryWrapper<Reply>().eq(Reply::getCommentId, comment.getId()));
+                    List<ReplyVo> replyVoList = replies.stream()
+                            .sorted(Comparator.comparing(Reply::getCreatedTime).reversed())
+                            .map(reply -> {
+                                ReplyVo.ReplyVoBuilder replyVoBuilder = ReplyVo.builder();
+                                replyVoBuilder.id(reply.getId())
+                                        .type(reply.getType())
+                                        .user(userMap.get(reply.getUserId()))
+                                        .targetId(reply.getTargetId())
+                                        .targetUser(userMap.get(reply.getTargetUserId()))
+                                        .content(reply.getContent())
+                                        .createdTime(reply.getCreatedTime().format(formatter));
+                                return replyVoBuilder.build();
+                            })
+                            .toList();
+                    builder.replyList(replyVoList);
                     return builder.build();
                 }).toList();
     }
@@ -94,5 +145,6 @@ public class CommentServiceImpl implements CommentService {
         if (commentMapper.deleteById(commentId) <= 0) {
             throw new ServerException("Failed to delete the comment, please try again later");
         }
+        deleteCommentProducer.sendDeleteCommentMessage(commentId);
     }
 }

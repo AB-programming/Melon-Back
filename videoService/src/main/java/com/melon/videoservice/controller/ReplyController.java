@@ -7,6 +7,8 @@ import com.melon.videoservice.service.ReplyService;
 import jakarta.annotation.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +29,13 @@ public class ReplyController {
         return replyService.addReply(replyDto.getUserId(),
                 replyDto.getType(),
                 replyDto.getTargetId(),
+                replyDto.getCommentId(),
                 replyDto.getContent());
+    }
+
+    @DeleteMapping("/{replyId}")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public void deleteReply(@PathVariable String replyId) throws ServerException {
+        replyService.deleteReplyByReplyId(replyId);
     }
 }

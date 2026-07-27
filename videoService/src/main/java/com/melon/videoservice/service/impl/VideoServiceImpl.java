@@ -10,12 +10,12 @@ import com.melon.videoservice.mapper.VideoMapper;
 import com.melon.videoservice.pojo.entity.Video;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.remote.UserRemote;
+import com.melon.videoservice.service.DeleteVideoProducer;
 import com.melon.videoservice.service.MergeProducer;
 import com.melon.videoservice.service.VideoService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.IOUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
@@ -46,6 +46,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Resource
     private MergeProducer mergeProducer;
+
+    @Resource
+    private DeleteVideoProducer deleteVideoProducer;
 
     @Override
     public String createVideo(MultipartFile pictureFile, String userId, String title, String description) throws ServerException {
@@ -232,6 +235,21 @@ public class VideoServiceImpl implements VideoService {
             return "FAILED";
         }
         return status;
+    }
+
+    @Override
+    public Boolean deleteVideo(String videoId) {
+        Video video = videoMapper.selectById(videoId);
+        if (Objects.isNull(video)) {
+            return false;
+        }
+        if (videoMapper.deleteById(videoId) <= 0) {
+            return false;
+        }
+        if (StringUtils.hasText(video.getVideoPath()) && StringUtils.hasText(video.getPicturePath())) {
+            deleteVideoProducer.sendDeleteMessage(videoId, video.getVideoPath(), video.getPicturePath());
+        }
+        return true;
     }
 
     public List<VideoVo> convertVideoListToVideoVoList(List<Video> videoList) {

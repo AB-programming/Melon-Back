@@ -19,3 +19,6 @@ hdfs:
 file:
   maxFileSize: 1024
   maxRequestSize: 2048
+
+logs:
+  home: logs

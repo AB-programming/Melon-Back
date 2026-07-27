@@ -1,0 +1,27 @@
+<configuration>
+    <springProperty name="LOG_HOME" source="logs.home" />
+
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <encoder>
+            <pattern>g%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %ms%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+
+            <fileNamePattern>
+                ${LOG_HOME}/user-service/user-service-%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+
+            <maxHistory>30</maxHistory>
+
+        </rollingPolicy>
+
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

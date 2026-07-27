@@ -10,6 +10,7 @@ public class ReplyVo {
     private String id;
     private UserVo user;
     private String targetId;
+    private UserVo targetUser;
     private String type;
     private String content;
     private String createdTime;

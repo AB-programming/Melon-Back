@@ -27,7 +27,7 @@ public class CommentController {
     }
 
     @GetMapping("/list")
-    public List<CommentVo> getCommentListByVideoId(@RequestParam("userId") String userId, @RequestParam("videoId") String videoId) {
+    public List<CommentVo> getCommentListByVideoId(@RequestParam("userId") String userId, @RequestParam("videoId") String videoId) throws ServerException {
         return commentService.getCommentListByUserIdAndVideoId(userId, videoId);
     }
 
