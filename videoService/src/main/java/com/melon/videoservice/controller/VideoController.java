@@ -94,4 +94,10 @@ public class VideoController {
     public Boolean deleteVideo(@PathVariable("videoId") String videoId) {
         return videoService.deleteVideo(videoId);
     }
+
+    @GetMapping("/getFollowVideoList")
+    @PreAuthorize("hasAuthority('SCOPE_profile')")
+    public List<VideoVo> getFollowVideoList(@RequestParam("userId") String userId) throws ServerException {
+        return videoService.selectFollowVideoList(userId);
+    }
 }

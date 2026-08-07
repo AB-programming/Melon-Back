@@ -17,4 +17,7 @@ public interface UserRemote {
 
     @GetMapping("/getUserListByIds")
     HttpResult<Map<String, UserVo>> getUserListByIds(@RequestParam("ids") List<String> ids);
+
+    @GetMapping("/subscription/getMySubscriptions")
+    HttpResult<List<UserVo>> getMySubscriptions(@RequestParam("subscriber") String subscriber);
 }
