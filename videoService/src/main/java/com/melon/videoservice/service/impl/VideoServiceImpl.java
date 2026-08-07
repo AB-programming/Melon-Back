@@ -252,6 +252,24 @@ public class VideoServiceImpl implements VideoService {
         return true;
     }
 
+    @Override
+    public List<VideoVo> selectFollowVideoList(String userId) {
+        HttpResult<List<UserVo>> subscriptionsResult = userRemote.getMySubscriptions(userId);
+        if (HttpResponseStatus.OK.getCode() == subscriptionsResult.getCode()) {
+            List<UserVo> userList = subscriptionsResult.getData();
+            List<String> userIds = userList.stream()
+                    .map(UserVo::getId)
+                    .toList();
+            if (!userIds.isEmpty()) {
+                LambdaQueryWrapper<Video> videoLambdaQueryWrapper = new LambdaQueryWrapper<>();
+                videoLambdaQueryWrapper.in(Video::getUserId, userIds);
+                List<Video> videoList = videoMapper.selectList(videoLambdaQueryWrapper);
+                return this.convertVideoListToVideoVoList(videoList);
+            }
+        }
+        return List.of();
+    }
+
     public List<VideoVo> convertVideoListToVideoVoList(List<Video> videoList) {
         return videoList.parallelStream()
                 .map(video -> {

@@ -22,4 +22,5 @@ public interface VideoService {
     Boolean merge(String fileMd5, String id);
     String checkMergeResult(String fileId);
     Boolean deleteVideo(String videoId);
+    List<VideoVo> selectFollowVideoList(String userId);
 }
