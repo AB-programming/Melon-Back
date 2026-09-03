@@ -23,6 +23,7 @@
         <module>userService</module>
         <module>videoService</module>
         <module>postService</module>
+        <module>searchService</module>
     </modules>
 
     <properties>
