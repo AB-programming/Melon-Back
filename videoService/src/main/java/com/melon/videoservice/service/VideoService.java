@@ -1,6 +1,7 @@
 package com.melon.videoservice.service;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -23,4 +24,5 @@ public interface VideoService {
     String checkMergeResult(String fileId);
     Boolean deleteVideo(String videoId);
     List<VideoVo> selectFollowVideoList(String userId);
+    PageVo<VideoVo> searchVideo(String keyword, long pageNum, long pageSize);
 }

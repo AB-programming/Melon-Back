@@ -1,6 +1,7 @@
 package com.melon.videoservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.videoservice.pojo.dto.ChunkDto;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.service.VideoService;
@@ -99,5 +100,12 @@ public class VideoController {
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public List<VideoVo> getFollowVideoList(@RequestParam("userId") String userId) throws ServerException {
         return videoService.selectFollowVideoList(userId);
+    }
+
+    @GetMapping("/searchVideo")
+    public PageVo<VideoVo> searchVideo(@RequestParam("keyword") String keyword,
+                                       @RequestParam(value = "pageNum", defaultValue = "1") long pageNum,
+                                       @RequestParam(value = "pageSize", defaultValue = "10") long pageSize) {
+        return videoService.searchVideo(keyword, pageNum, pageSize);
     }
 }

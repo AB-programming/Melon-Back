@@ -1,6 +1,7 @@
 package com.melon.postservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.postservice.pojo.vo.PostVo;
 import com.melon.postservice.service.PostService;
 import jakarta.annotation.Resource;
@@ -60,5 +61,13 @@ public class PostController {
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void deletePost(@PathVariable String postId) throws ServerException {
         postService.deletePost(postId);
+    }
+
+    @GetMapping("/searchPost")
+    public PageVo<PostVo> searchPost(@RequestParam("keyword") String keyword,
+                                     @RequestParam(value = "pageNum", defaultValue = "1") long pageNum,
+                                     @RequestParam(value = "pageSize", defaultValue = "10") long pageSize,
+                                     @RequestParam(value = "userId", required = false) String userId) {
+        return postService.searchPost(keyword, pageNum, pageSize, userId);
     }
 }

@@ -1,4 +1,4 @@
-package com.menlon.searchservice;
+package com.melon.searchservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

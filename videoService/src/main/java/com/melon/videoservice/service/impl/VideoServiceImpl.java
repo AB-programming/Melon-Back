@@ -1,10 +1,12 @@
 package com.melon.videoservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.melon.baseservice.service.HdfsService;
 import com.melon.commonservice.common.HttpResponseStatus;
 import com.melon.commonservice.common.HttpResult;
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.videoservice.mapper.VideoMapper;
 import com.melon.videoservice.pojo.entity.Video;
@@ -283,5 +285,18 @@ public class VideoServiceImpl implements VideoService {
                     }
                     return builder.build();
                 }).toList();
+    }
+
+    @Override
+    public PageVo<VideoVo> searchVideo(String keyword, long pageNum, long pageSize) {
+        LambdaQueryWrapper<Video> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(Video::getTitle, keyword).or().like(Video::getDescription, keyword);
+        Page<Video> page = videoMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+        return PageVo.<VideoVo>builder()
+                .records(this.convertVideoListToVideoVoList(page.getRecords()))
+                .total(page.getTotal())
+                .pageNum(pageNum)
+                .pageSize(pageSize)
+                .build();
     }
 }

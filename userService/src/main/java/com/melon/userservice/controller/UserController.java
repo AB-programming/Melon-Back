@@ -1,6 +1,7 @@
 package com.melon.userservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.userservice.pojo.dto.NewUserDto;
 import com.melon.userservice.pojo.dto.UserDto;
@@ -47,5 +48,12 @@ public class UserController {
     @GetMapping("/getUserListByIds")
     public Map<String, UserVo> getUserListByIds(@RequestParam("ids") List<String> ids) {
         return userService.getUserListByIds(ids);
+    }
+
+    @GetMapping("/searchUser")
+    public PageVo<UserVo> searchUser(@RequestParam("keyword") String keyword,
+                                     @RequestParam(value = "pageNum", defaultValue = "1") long pageNum,
+                                     @RequestParam(value = "pageSize", defaultValue = "10") long pageSize) {
+        return userService.searchUser(keyword, pageNum, pageSize);
     }
 }

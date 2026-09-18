@@ -3,6 +3,7 @@ package com.melon.videoservice;
 import com.melon.baseservice.config.HdfsConfig;
 import com.melon.baseservice.config.RedisConfig;
 import com.melon.commonservice.config.FeignConfig;
+import com.melon.commonservice.config.MybatisPlusConfig;
 import com.melon.commonservice.config.SecurityConfig;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -13,7 +14,7 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @MapperScan("com.melon.videoservice.mapper")
 @EnableFeignClients
-@ComponentScan(basePackages = "com.melon.videoservice", basePackageClasses = {SecurityConfig.class, FeignConfig.class, HdfsConfig.class, RedisConfig.class})
+@ComponentScan(basePackages = "com.melon.videoservice", basePackageClasses = {SecurityConfig.class, FeignConfig.class, HdfsConfig.class, RedisConfig.class, MybatisPlusConfig.class})
 public class VideoServiceApplication {
 
 	public static void main(String[] args) {

@@ -25,3 +25,9 @@ spring:
               - Path=/post/**
             filters:
               - RewritePath=/post, /
+          - id: searchService
+            uri: lb://searchService
+            predicates:
+              - Path=/search/**
+            filters:
+              - RewritePath=/search, /

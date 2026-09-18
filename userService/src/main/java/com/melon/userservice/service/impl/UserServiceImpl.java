@@ -1,7 +1,9 @@
 package com.melon.userservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.commonservice.pojo.entity.User;
 import com.melon.userservice.mapper.UserMapper;
@@ -144,5 +146,31 @@ public class UserServiceImpl implements UserService {
                         .build())
                 .distinct()
                 .collect(Collectors.toMap(UserVo::getId, Function.identity()));
+    }
+
+    @Override
+    public PageVo<UserVo> searchUser(String keyword, long pageNum, long pageSize) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(User::getUsername, keyword).or().like(User::getNickname, keyword);
+        Page<User> page = userMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+        List<UserVo> records = page.getRecords().stream()
+                .map(user -> UserVo.builder()
+                        .id(user.getId())
+                        .avatarUrl(user.getAvatarUrl())
+                        .username(user.getUsername())
+                        .signature(user.getSignature())
+                        .nickname(user.getNickname())
+                        .introduction(user.getIntroduction())
+                        .residence(user.getResidence())
+                        .gender(user.getGender())
+                        .interest(user.getInterest())
+                        .build())
+                .toList();
+        return PageVo.<UserVo>builder()
+                .records(records)
+                .total(page.getTotal())
+                .pageNum(pageNum)
+                .pageSize(pageSize)
+                .build();
     }
 }

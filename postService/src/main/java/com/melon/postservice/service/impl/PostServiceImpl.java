@@ -1,10 +1,12 @@
 package com.melon.postservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.melon.baseservice.service.HdfsService;
 import com.melon.commonservice.common.HttpResponseStatus;
 import com.melon.commonservice.common.HttpResult;
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.postservice.mapper.LikeMapper;
 import com.melon.postservice.mapper.PostMapper;
@@ -242,5 +244,40 @@ public class PostServiceImpl implements PostService {
                             .likeCount(likeCount)
                             .build();
                 }).toList();
+    }
+
+    @Override
+    public PageVo<PostVo> searchPost(String keyword, long pageNum, long pageSize, String userId) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(Post::getContent, keyword).orderByDesc(Post::getCreatedTime);
+        Page<Post> page = postMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+        List<PostVo> records = page.getRecords().stream()
+                .map(post -> {
+                    PostVo.PostVoBuilder builder = PostVo.builder();
+                    HttpResult<UserVo> userResult = userRemote.getUserById(post.getUserId());
+                    if (userResult.getCode().equals(HttpResponseStatus.OK.getCode())) {
+                        builder.user(userResult.getData());
+                    }
+                    if (Objects.nonNull(userId) && !userId.isEmpty()) {
+                        builder.isLike(postLikeMapper.exists(new LambdaQueryWrapper<PostLike>()
+                                .allEq(Map.of(PostLike::getUserId, userId, PostLike::getPostId, post.getId()))));
+                    } else {
+                        builder.isLike(false);
+                    }
+                    Long likeCount = postLikeMapper.selectCount(new LambdaQueryWrapper<PostLike>().eq(PostLike::getPostId, post.getId()));
+                    return builder
+                            .id(post.getId())
+                            .content(post.getContent())
+                            .images(Arrays.stream(post.getImages().split(";")).toList())
+                            .createdTime(post.getCreatedTime().format(formatter))
+                            .likeCount(likeCount)
+                            .build();
+                }).toList();
+        return PageVo.<PostVo>builder()
+                .records(records)
+                .total(page.getTotal())
+                .pageNum(pageNum)
+                .pageSize(pageSize)
+                .build();
     }
 }

@@ -13,4 +13,12 @@
     <name>searchService</name>
     <description>searchService</description>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.melon</groupId>
+            <artifactId>commonService</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
 </project>
