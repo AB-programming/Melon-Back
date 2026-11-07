@@ -13,6 +13,7 @@ import com.melon.videoservice.remote.UserRemote;
 import com.melon.videoservice.service.ReplyService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -84,7 +85,14 @@ public class ReplyServiceImpl implements ReplyService {
     }
 
     @Override
-    public void deleteReplyByReplyId(String replyId) throws ServerException {
+    public void deleteReplyByReplyId(String replyId, String currentUserId) throws ServerException {
+        Reply reply = replyMapper.selectById(replyId);
+        if (Objects.isNull(reply)) {
+            throw new ServerException("Failed to delete the reply, please try again later");
+        }
+        if (!reply.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You can only delete your own replies");
+        }
         if (replyMapper.deleteById(replyId) <= 0) {
             throw new ServerException("Failed to delete the reply, please try again later");
         }

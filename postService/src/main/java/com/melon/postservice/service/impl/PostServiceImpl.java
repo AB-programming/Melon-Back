@@ -19,6 +19,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.io.IOUtils;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -127,7 +128,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostVo> selectFollowedPosts(String userId) throws ServerException {
-        HttpResult<List<UserVo>> userResult = userRemote.getMySubscriptions(userId);
+        HttpResult<List<UserVo>> userResult = userRemote.getMySubscriptions();
         if (HttpResponseStatus.OK.getCode() != userResult.getCode()) {
             throw new ServerException("Failed to fetch subscriptions.");
         }
@@ -164,10 +165,13 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void deletePost(String postId) throws ServerException {
+    public void deletePost(String postId, String currentUserId) throws ServerException {
         Post post = postMapper.selectById(postId);
         if (Objects.isNull(post)) {
             return;
+        }
+        if (!post.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You can only delete your own posts.");
         }
         if (postMapper.deleteById(postId) <= 0) {
             throw new ServerException("Failed to delete the post.");

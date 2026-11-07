@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -28,7 +29,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -141,7 +144,17 @@ class VideoServiceImplTest {
     void deleteVideo_whenNotExist_returnsFalse() {
         when(videoMapper.selectById("v1")).thenReturn(null);
 
-        assertThat(videoService.deleteVideo("v1")).isFalse();
+        assertThat(videoService.deleteVideo("v1", "u1")).isFalse();
+    }
+
+    @Test
+    void deleteVideo_whenNotOwner_throwsAccessDenied() {
+        when(videoMapper.selectById("v1")).thenReturn(video("v1", "u1"));
+
+        assertThatThrownBy(() -> videoService.deleteVideo("v1", "u2"))
+                .isInstanceOf(AccessDeniedException.class);
+        verify(videoMapper, never()).deleteById(anyString());
+        verifyNoInteractions(deleteVideoProducer);
     }
 
     @Test
@@ -149,7 +162,7 @@ class VideoServiceImplTest {
         when(videoMapper.selectById("v1")).thenReturn(video("v1", "u1"));
         when(videoMapper.deleteById("v1")).thenReturn(0);
 
-        assertThat(videoService.deleteVideo("v1")).isFalse();
+        assertThat(videoService.deleteVideo("v1", "u1")).isFalse();
     }
 
     @Test
@@ -157,7 +170,7 @@ class VideoServiceImplTest {
         when(videoMapper.selectById("v1")).thenReturn(video("v1", "u1"));
         when(videoMapper.deleteById("v1")).thenReturn(1);
 
-        assertThat(videoService.deleteVideo("v1")).isTrue();
+        assertThat(videoService.deleteVideo("v1", "u1")).isTrue();
         verify(deleteVideoProducer).sendDeleteMessage("v1", "/video/v1.mp4", "/cover/v1.png");
     }
 
@@ -174,7 +187,7 @@ class VideoServiceImplTest {
 
     @Test
     void selectFollowVideoList_whenNoSubscriptions_returnsEmpty() {
-        when(userRemote.getMySubscriptions("u1")).thenReturn(
+        when(userRemote.getMySubscriptions()).thenReturn(
                 HttpResult.<List<UserVo>>builder()
                         .code(HttpResponseStatus.OK.getCode())
                         .data(List.of())
@@ -185,7 +198,7 @@ class VideoServiceImplTest {
 
     @Test
     void selectFollowVideoList_success() {
-        when(userRemote.getMySubscriptions("u1")).thenReturn(
+        when(userRemote.getMySubscriptions()).thenReturn(
                 HttpResult.<List<UserVo>>builder()
                         .code(HttpResponseStatus.OK.getCode())
                         .data(List.of(UserVo.builder().id("u2").build()))

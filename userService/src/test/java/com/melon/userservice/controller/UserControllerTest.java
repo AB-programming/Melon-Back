@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melon.commonservice.config.ExceptionController;
 import com.melon.commonservice.config.GlobalController;
 import com.melon.commonservice.pojo.vo.UserVo;
+import com.melon.userservice.pojo.dto.UserDto;
 import com.melon.userservice.service.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -48,6 +50,11 @@ class UserControllerTest {
                 .build();
     }
 
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
+    }
+
     @Test
     void getUserById_returnsWrappedUser() throws Exception {
         when(userService.getUserById("u1")).thenReturn(UserVo.builder().id("u1").username("username").build());
@@ -82,9 +89,11 @@ class UserControllerTest {
 
     @Test
     void updateUser_returnsWrappedUser() throws Exception {
-        when(userService.updateUser(any(), any())).thenReturn(UserVo.builder().id("u1").nickname("newNick").build());
+        JwtTestUtils.setAuthenticatedUser("u1");
+        when(userService.updateUser("u1", UserDto.builder().nickname("newNick").build()))
+                .thenReturn(UserVo.builder().id("u1").nickname("newNick").build());
 
-        mockMvc.perform(put("/u1")
+        mockMvc.perform(put("/updateUser")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nickname\":\"newNick\"}"))
                 .andExpect(status().isOk())

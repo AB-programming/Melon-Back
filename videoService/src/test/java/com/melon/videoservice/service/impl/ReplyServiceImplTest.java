@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -93,16 +96,36 @@ class ReplyServiceImplTest {
 
     @Test
     void deleteReplyByReplyId_success() throws ServerException {
+        when(replyMapper.selectById("r1")).thenReturn(Reply.builder().id("r1").userId("u1").build());
         when(replyMapper.deleteById("r1")).thenReturn(1);
 
-        replyService.deleteReplyByReplyId("r1");
+        replyService.deleteReplyByReplyId("r1", "u1");
+    }
+
+    @Test
+    void deleteReplyByReplyId_whenNotOwner_throwsAccessDenied() {
+        when(replyMapper.selectById("r1")).thenReturn(Reply.builder().id("r1").userId("u1").build());
+
+        assertThatThrownBy(() -> replyService.deleteReplyByReplyId("r1", "u2"))
+                .isInstanceOf(AccessDeniedException.class);
+        verify(replyMapper, never()).deleteById(anyString());
+    }
+
+    @Test
+    void deleteReplyByReplyId_whenNotExist_throws() {
+        when(replyMapper.selectById("r1")).thenReturn(null);
+
+        assertThatThrownBy(() -> replyService.deleteReplyByReplyId("r1", "u1"))
+                .isInstanceOf(ServerException.class)
+                .hasMessage("Failed to delete the reply, please try again later");
     }
 
     @Test
     void deleteReplyByReplyId_whenFail_throws() {
+        when(replyMapper.selectById("r1")).thenReturn(Reply.builder().id("r1").userId("u1").build());
         when(replyMapper.deleteById("r1")).thenReturn(0);
 
-        assertThatThrownBy(() -> replyService.deleteReplyByReplyId("r1"))
+        assertThatThrownBy(() -> replyService.deleteReplyByReplyId("r1", "u1"))
                 .isInstanceOf(ServerException.class)
                 .hasMessage("Failed to delete the reply, please try again later");
     }

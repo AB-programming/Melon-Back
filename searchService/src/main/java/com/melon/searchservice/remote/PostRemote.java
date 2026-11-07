@@ -12,6 +12,5 @@ public interface PostRemote {
     @GetMapping("/searchPost")
     HttpResult<PageVo<SearchPostVo>> searchPost(@RequestParam("keyword") String keyword,
                                                 @RequestParam("pageNum") long pageNum,
-                                                @RequestParam("pageSize") long pageSize,
-                                                @RequestParam(value = "userId", required = false) String userId);
+                                                @RequestParam("pageSize") long pageSize);
 }

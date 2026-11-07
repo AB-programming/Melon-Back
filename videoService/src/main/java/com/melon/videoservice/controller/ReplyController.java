@@ -1,6 +1,7 @@
 package com.melon.videoservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.util.SecurityUtils;
 import com.melon.videoservice.pojo.dto.ReplyDto;
 import com.melon.videoservice.pojo.vo.ReplyVo;
 import com.melon.videoservice.service.ReplyService;
@@ -26,7 +27,7 @@ public class ReplyController {
         if (!replyDto.getType().equals("c") && !replyDto.getType().equals("r")) {
             throw new ServerException("The type of reply is not correct");
         }
-        return replyService.addReply(replyDto.getUserId(),
+        return replyService.addReply(SecurityUtils.getCurrentUserId(),
                 replyDto.getType(),
                 replyDto.getTargetId(),
                 replyDto.getCommentId(),
@@ -36,6 +37,6 @@ public class ReplyController {
     @DeleteMapping("/{replyId}")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void deleteReply(@PathVariable String replyId) throws ServerException {
-        replyService.deleteReplyByReplyId(replyId);
+        replyService.deleteReplyByReplyId(replyId, SecurityUtils.getCurrentUserId());
     }
 }

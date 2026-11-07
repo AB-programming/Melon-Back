@@ -8,5 +8,5 @@ public interface ReplyService {
 
     Boolean exists(String userId, String type, String targetId);
 
-    void deleteReplyByReplyId(String replyId) throws ServerException;
+    void deleteReplyByReplyId(String replyId, String currentUserId) throws ServerException;
 }

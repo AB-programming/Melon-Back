@@ -1,6 +1,7 @@
 package com.melon.videoservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.util.SecurityUtils;
 import com.melon.videoservice.pojo.dto.LikeDto;
 import com.melon.videoservice.service.LikeService;
 import jakarta.annotation.Resource;
@@ -16,20 +17,20 @@ public class LikeController {
 
     @GetMapping("/isLike")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public Boolean isLike(@RequestParam("userId") String userId, @RequestParam("videoId") String videoId) throws ServerException {
-        return likeService.exists(userId, videoId);
+    public Boolean isLike(@RequestParam("videoId") String videoId) throws ServerException {
+        return likeService.exists(SecurityUtils.getCurrentUserId(), videoId);
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public String addLike(@RequestBody @Validated LikeDto likeDto) throws ServerException {
-        return likeService.addLike(likeDto.getUserId(), likeDto.getVideoId());
+        return likeService.addLike(SecurityUtils.getCurrentUserId(), likeDto.getVideoId());
     }
 
     @DeleteMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void deleteLike(@RequestBody @Validated LikeDto likeDto) throws ServerException {
-        likeService.deleteLike(likeDto.getUserId(), likeDto.getVideoId());
+        likeService.deleteLike(SecurityUtils.getCurrentUserId(), likeDto.getVideoId());
     }
 
     @GetMapping("/count")

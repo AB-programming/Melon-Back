@@ -69,7 +69,7 @@ public class ExceptionController {
         return HttpResult.<String>builder()
                 .code(HttpResponseStatus.FORBIDDEN.getCode())
                 .message(HttpResponseStatus.FORBIDDEN.getMessage())
-                .data("Forbidden")
+                .data(e.getMessage())
                 .build();
     }
 

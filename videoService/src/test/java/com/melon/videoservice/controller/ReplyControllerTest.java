@@ -6,6 +6,7 @@ import com.melon.commonservice.config.GlobalController;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.videoservice.pojo.vo.ReplyVo;
 import com.melon.videoservice.service.ReplyService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -44,14 +45,20 @@ class ReplyControllerTest {
                 .build();
     }
 
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
+    }
+
     @Test
     void addReply_returnsWrappedReply() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(replyService.addReply("u1", "c", "c1", "c1", "content"))
                 .thenReturn(ReplyVo.builder().id("r1").user(UserVo.builder().id("u1").build()).type("c").build());
 
         mockMvc.perform(post("/reply")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"type\":\"c\",\"targetId\":\"c1\",\"commentId\":\"c1\",\"content\":\"content\"}"))
+                        .content("{\"type\":\"c\",\"targetId\":\"c1\",\"commentId\":\"c1\",\"content\":\"content\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.id").value("r1"));
@@ -59,9 +66,10 @@ class ReplyControllerTest {
 
     @Test
     void addReply_whenTypeInvalid_returnsServerError() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         mockMvc.perform(post("/reply")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"type\":\"x\",\"targetId\":\"c1\",\"commentId\":\"c1\",\"content\":\"content\"}"))
+                        .content("{\"type\":\"x\",\"targetId\":\"c1\",\"commentId\":\"c1\",\"content\":\"content\"}"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.data").value("The type of reply is not correct"));

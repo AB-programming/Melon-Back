@@ -15,8 +15,7 @@ public class SearchController {
     public Object search(@RequestParam("keyword") String keyword,
                          @RequestParam(value = "type", defaultValue = "all") String type,
                          @RequestParam(value = "pageNum", defaultValue = "1") long pageNum,
-                         @RequestParam(value = "pageSize", defaultValue = "10") long pageSize,
-                         @RequestParam(value = "userId", required = false) String userId) {
-        return searchService.search(keyword, type, pageNum, pageSize, userId);
+                         @RequestParam(value = "pageSize", defaultValue = "10") long pageSize) {
+        return searchService.search(keyword, type, pageNum, pageSize);
     }
 }

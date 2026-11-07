@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melon.commonservice.config.ExceptionController;
 import com.melon.commonservice.config.GlobalController;
 import com.melon.videoservice.service.CommentLikeService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -42,13 +43,19 @@ class CommentLikeControllerTest {
                 .build();
     }
 
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
+    }
+
     @Test
     void addCommentLike_returnsWrappedId() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(commentLikeService.addCommentLike("u1", "c1")).thenReturn("cl_id");
 
         mockMvc.perform(post("/commentLike")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"commentId\":\"c1\"}"))
+                        .content("{\"commentId\":\"c1\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value("cl_id"));

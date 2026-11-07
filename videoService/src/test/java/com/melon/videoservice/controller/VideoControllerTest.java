@@ -6,9 +6,11 @@ import com.melon.commonservice.config.GlobalController;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.service.VideoService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -48,6 +51,11 @@ class VideoControllerTest {
                 .setControllerAdvice(globalController, exceptionController)
                 .setValidator(validator)
                 .build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
     }
 
     @Test
@@ -84,12 +92,23 @@ class VideoControllerTest {
 
     @Test
     void deleteVideo_returnsWrappedBoolean() throws Exception {
-        when(videoService.deleteVideo("v1")).thenReturn(true);
+        JwtTestUtils.setAuthenticatedUser("u1");
+        when(videoService.deleteVideo("v1", "u1")).thenReturn(true);
 
         mockMvc.perform(delete("/v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(true));
+    }
+
+    @Test
+    void deleteVideo_whenNotOwner_returnsForbidden() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
+        doThrow(new AccessDeniedException("You can only delete your own videos."))
+                .when(videoService).deleteVideo("v1", "u1");
+
+        mockMvc.perform(delete("/v1"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

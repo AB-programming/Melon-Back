@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class SecurityUtils {
@@ -28,6 +29,17 @@ public final class SecurityUtils {
 
     public static String getCurrentUserId() {
         return getCurrentUserVo().getId();
+    }
+
+    public static String getCurrentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Map<String, Object> userClaim = jwtAuth.getToken().getClaimAsMap("user");
+            if (Objects.nonNull(userClaim) && Objects.nonNull(userClaim.get("id"))) {
+                return userClaim.get("id").toString();
+            }
+        }
+        return null;
     }
 
     public static UserVo getCurrentUserVo() {

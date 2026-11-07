@@ -6,6 +6,7 @@ import com.melon.commonservice.config.GlobalController;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.videoservice.pojo.vo.CommentVo;
 import com.melon.videoservice.service.CommentService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -47,14 +48,20 @@ class CommentControllerTest {
                 .build();
     }
 
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
+    }
+
     @Test
     void addComment_returnsWrappedComment() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(commentService.addComment("u1", "v1", "nice"))
                 .thenReturn(CommentVo.builder().id("c1").content("nice").user(UserVo.builder().id("u1").build()).build());
 
         mockMvc.perform(post("/comment")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"videoId\":\"v1\",\"content\":\"nice\"}"))
+                        .content("{\"videoId\":\"v1\",\"content\":\"nice\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.id").value("c1"));
@@ -62,9 +69,10 @@ class CommentControllerTest {
 
     @Test
     void addComment_whenContentBlank_returnsBadRequest() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         mockMvc.perform(post("/comment")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"videoId\":\"v1\",\"content\":\"\"}"))
+                        .content("{\"videoId\":\"v1\",\"content\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.data").value("The content cannot empty!"));
@@ -72,10 +80,11 @@ class CommentControllerTest {
 
     @Test
     void getCommentList_returnsWrappedList() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(commentService.getCommentListByUserIdAndVideoId("u1", "v1"))
                 .thenReturn(List.of(CommentVo.builder().id("c1").content("nice").build()));
 
-        mockMvc.perform(get("/comment/list").param("userId", "u1").param("videoId", "v1"))
+        mockMvc.perform(get("/comment/list").param("videoId", "v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data[0].id").value("c1"));

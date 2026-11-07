@@ -32,22 +32,22 @@ public class SearchServiceImpl implements SearchService {
     private PostRemote postRemote;
 
     @Override
-    public Object search(String keyword, String type, long pageNum, long pageSize, String userId) {
+    public Object search(String keyword, String type, long pageNum, long pageSize) {
         if (!StringUtils.hasText(keyword)) {
             return emptyResult(type, pageNum, pageSize);
         }
         return switch (type) {
             case "video" -> videoRemote.searchVideo(keyword, pageNum, pageSize).getData();
             case "user" -> userRemote.searchUser(keyword, pageNum, pageSize).getData();
-            case "post" -> postRemote.searchPost(keyword, pageNum, pageSize, userId).getData();
-            default -> searchAll(keyword, userId);
+            case "post" -> postRemote.searchPost(keyword, pageNum, pageSize).getData();
+            default -> searchAll(keyword);
         };
     }
 
-    private SearchAllVo searchAll(String keyword, String userId) {
+    private SearchAllVo searchAll(String keyword) {
         PageVo<SearchVideoVo> videos = videoRemote.searchVideo(keyword, ALL_PAGE_NUM, ALL_VIDEO_SIZE).getData();
         PageVo<UserVo> users = userRemote.searchUser(keyword, ALL_PAGE_NUM, ALL_USER_SIZE).getData();
-        PageVo<SearchPostVo> posts = postRemote.searchPost(keyword, ALL_PAGE_NUM, ALL_POST_SIZE, userId).getData();
+        PageVo<SearchPostVo> posts = postRemote.searchPost(keyword, ALL_PAGE_NUM, ALL_POST_SIZE).getData();
         return SearchAllVo.builder()
                 .videos(videos)
                 .users(users)

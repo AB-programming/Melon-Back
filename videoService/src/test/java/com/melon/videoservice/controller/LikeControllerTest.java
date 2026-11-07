@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melon.commonservice.config.ExceptionController;
 import com.melon.commonservice.config.GlobalController;
 import com.melon.videoservice.service.LikeService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -43,13 +44,19 @@ class LikeControllerTest {
                 .build();
     }
 
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
+    }
+
     @Test
     void addLike_returnsWrappedId() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(likeService.addLike("u1", "v1")).thenReturn("like_id");
 
         mockMvc.perform(post("/like")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"videoId\":\"v1\"}"))
+                        .content("{\"videoId\":\"v1\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value("like_id"));
@@ -67,9 +74,10 @@ class LikeControllerTest {
 
     @Test
     void isLike_returnsWrappedBoolean() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(likeService.exists("u1", "v1")).thenReturn(true);
 
-        mockMvc.perform(get("/like/isLike").param("userId", "u1").param("videoId", "v1"))
+        mockMvc.perform(get("/like/isLike").param("videoId", "v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(true));

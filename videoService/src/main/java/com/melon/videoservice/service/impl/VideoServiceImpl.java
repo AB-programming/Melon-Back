@@ -23,6 +23,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -240,10 +241,13 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
-    public Boolean deleteVideo(String videoId) {
+    public Boolean deleteVideo(String videoId, String currentUserId) {
         Video video = videoMapper.selectById(videoId);
         if (Objects.isNull(video)) {
             return false;
+        }
+        if (!video.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You can only delete your own videos.");
         }
         if (videoMapper.deleteById(videoId) <= 0) {
             return false;
@@ -256,7 +260,7 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public List<VideoVo> selectFollowVideoList(String userId) {
-        HttpResult<List<UserVo>> subscriptionsResult = userRemote.getMySubscriptions(userId);
+        HttpResult<List<UserVo>> subscriptionsResult = userRemote.getMySubscriptions();
         if (HttpResponseStatus.OK.getCode() == subscriptionsResult.getCode()) {
             List<UserVo> userList = subscriptionsResult.getData();
             List<String> userIds = userList.stream()

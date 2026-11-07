@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +25,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,18 +115,42 @@ class CommentServiceImplTest {
 
     @Test
     void deleteCommentByCommentId_success() throws ServerException {
+        when(commentMapper.selectById("c1"))
+                .thenReturn(Comment.builder().id("c1").userId("u1").build());
         when(commentMapper.deleteById("c1")).thenReturn(1);
 
-        commentService.deleteCommentByCommentId("c1");
+        commentService.deleteCommentByCommentId("c1", "u1");
 
         verify(deleteCommentProducer).sendDeleteCommentMessage("c1");
     }
 
     @Test
+    void deleteCommentByCommentId_whenNotOwner_throwsAccessDenied() {
+        when(commentMapper.selectById("c1"))
+                .thenReturn(Comment.builder().id("c1").userId("u1").build());
+
+        assertThatThrownBy(() -> commentService.deleteCommentByCommentId("c1", "u2"))
+                .isInstanceOf(AccessDeniedException.class);
+        verify(commentMapper, never()).deleteById(anyString());
+        verifyNoInteractions(deleteCommentProducer);
+    }
+
+    @Test
+    void deleteCommentByCommentId_whenNotExist_throws() {
+        when(commentMapper.selectById("c1")).thenReturn(null);
+
+        assertThatThrownBy(() -> commentService.deleteCommentByCommentId("c1", "u1"))
+                .isInstanceOf(ServerException.class)
+                .hasMessage("Failed to delete the comment, please try again later");
+    }
+
+    @Test
     void deleteCommentByCommentId_whenFail_throws() {
+        when(commentMapper.selectById("c1"))
+                .thenReturn(Comment.builder().id("c1").userId("u1").build());
         when(commentMapper.deleteById("c1")).thenReturn(0);
 
-        assertThatThrownBy(() -> commentService.deleteCommentByCommentId("c1"))
+        assertThatThrownBy(() -> commentService.deleteCommentByCommentId("c1", "u1"))
                 .isInstanceOf(ServerException.class)
                 .hasMessage("Failed to delete the comment, please try again later");
     }

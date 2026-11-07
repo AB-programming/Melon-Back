@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melon.commonservice.config.ExceptionController;
 import com.melon.commonservice.config.GlobalController;
 import com.melon.videoservice.service.CollectService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -43,13 +44,19 @@ class CollectControllerTest {
                 .build();
     }
 
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
+    }
+
     @Test
     void addCollect_returnsWrappedId() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(collectService.addCollect("u1", "v1")).thenReturn("collect_id");
 
         mockMvc.perform(post("/collect")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"videoId\":\"v1\"}"))
+                        .content("{\"videoId\":\"v1\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value("collect_id"));
@@ -57,9 +64,10 @@ class CollectControllerTest {
 
     @Test
     void isCollect_returnsWrappedBoolean() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(collectService.exists("u1", "v1")).thenReturn(true);
 
-        mockMvc.perform(get("/collect/isCollect").param("userId", "u1").param("videoId", "v1"))
+        mockMvc.perform(get("/collect/isCollect").param("videoId", "v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(true));

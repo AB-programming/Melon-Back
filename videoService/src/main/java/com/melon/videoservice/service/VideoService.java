@@ -22,7 +22,7 @@ public interface VideoService {
     Set<Object> check(String fileMd5);
     Boolean merge(String fileMd5, String id);
     String checkMergeResult(String fileId);
-    Boolean deleteVideo(String videoId);
+    Boolean deleteVideo(String videoId, String currentUserId);
     List<VideoVo> selectFollowVideoList(String userId);
     PageVo<VideoVo> searchVideo(String keyword, long pageNum, long pageSize);
 }

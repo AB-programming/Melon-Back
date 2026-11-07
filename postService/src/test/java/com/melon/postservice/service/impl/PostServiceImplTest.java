@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -112,9 +114,20 @@ class PostServiceImplTest {
     void deletePost_whenPostNotExist_doesNothing() throws ServerException {
         when(postMapper.selectById("p1")).thenReturn(null);
 
-        postService.deletePost("p1");
+        postService.deletePost("p1", "u1");
 
         verify(postMapper, never()).deleteById(anyString());
+    }
+
+    @Test
+    void deletePost_whenNotOwner_throwsAccessDenied() {
+        when(postMapper.selectById("p1")).thenReturn(post("p1", "u1"));
+
+        assertThatThrownBy(() -> postService.deletePost("p1", "u2"))
+                .isInstanceOf(AccessDeniedException.class);
+        verify(postMapper, never()).deleteById(anyString());
+        verify(postLikeMapper, never()).delete(any());
+        verifyNoInteractions(hdfsService);
     }
 
     @Test
@@ -122,7 +135,7 @@ class PostServiceImplTest {
         when(postMapper.selectById("p1")).thenReturn(post("p1", "u1"));
         when(postMapper.deleteById("p1")).thenReturn(1);
 
-        postService.deletePost("p1");
+        postService.deletePost("p1", "u1");
 
         verify(postLikeMapper).delete(any());
         verify(hdfsService).delete("/post/a.png", true);
@@ -165,7 +178,7 @@ class PostServiceImplTest {
 
     @Test
     void selectFollowedPosts_whenNoSubscriptions_returnsEmpty() throws ServerException {
-        when(userRemote.getMySubscriptions("u1")).thenReturn(
+        when(userRemote.getMySubscriptions()).thenReturn(
                 HttpResult.<List<UserVo>>builder()
                         .code(HttpResponseStatus.OK.getCode())
                         .data(List.of())
@@ -178,7 +191,7 @@ class PostServiceImplTest {
 
     @Test
     void selectFollowedPosts_success() throws ServerException {
-        when(userRemote.getMySubscriptions("u1")).thenReturn(
+        when(userRemote.getMySubscriptions()).thenReturn(
                 HttpResult.<List<UserVo>>builder()
                         .code(HttpResponseStatus.OK.getCode())
                         .data(List.of(userVo("u2")))

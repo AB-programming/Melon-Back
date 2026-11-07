@@ -1,6 +1,7 @@
 package com.melon.videoservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.util.SecurityUtils;
 import com.melon.videoservice.pojo.dto.CommentLikeDto;
 import com.melon.videoservice.service.CommentLikeService;
 import jakarta.annotation.Resource;
@@ -17,12 +18,12 @@ public class CommentLikeController {
     @PostMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public String addCommentLike(@RequestBody @Validated CommentLikeDto commentLikeDto) throws ServerException {
-        return commentLikeService.addCommentLike(commentLikeDto.getUserId(), commentLikeDto.getCommentId());
+        return commentLikeService.addCommentLike(SecurityUtils.getCurrentUserId(), commentLikeDto.getCommentId());
     }
 
     @DeleteMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void cancelCommentLike(@RequestBody @Validated CommentLikeDto commentLikeDto) throws ServerException {
-        commentLikeService.deleteCommentLike(commentLikeDto.getUserId(), commentLikeDto.getCommentId());
+        commentLikeService.deleteCommentLike(SecurityUtils.getCurrentUserId(), commentLikeDto.getCommentId());
     }
 }

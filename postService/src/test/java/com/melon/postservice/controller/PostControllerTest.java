@@ -7,8 +7,10 @@ import com.melon.commonservice.exception.ServerException;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.postservice.pojo.vo.PostVo;
 import com.melon.postservice.service.PostService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -16,6 +18,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.util.List;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -101,7 +104,24 @@ class PostControllerTest {
 
     @Test
     void deletePost_returnsOk() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
+
         mockMvc.perform(delete("/p1"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void deletePost_whenNotOwner_returnsForbidden() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
+        doThrow(new AccessDeniedException("You can only delete your own posts."))
+                .when(postService).deletePost("p1", "u1");
+
+        mockMvc.perform(delete("/p1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melon.commonservice.config.ExceptionController;
 import com.melon.commonservice.config.GlobalController;
 import com.melon.postservice.service.LikeService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -46,33 +47,41 @@ class LikeControllerTest {
 
     @Test
     void addPostLike_returnsWrappedId() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(likeService.addLike("u1", "p1")).thenReturn("like_id");
 
         mockMvc.perform(post("/like")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"postId\":\"p1\"}"))
+                        .content("{\"postId\":\"p1\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value("like_id"));
     }
 
     @Test
-    void addPostLike_whenUserIdBlank_returnsBadRequest() throws Exception {
+    void addPostLike_whenPostIdBlank_returnsBadRequest() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         mockMvc.perform(post("/like")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"\",\"postId\":\"p1\"}"))
+                        .content("{\"postId\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.data").value("The userId cannot empty!"));
+                .andExpect(jsonPath("$.data").value("The postId cannot empty!"));
     }
 
     @Test
     void deletePostLike_invokesService() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         mockMvc.perform(delete("/like")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"u1\",\"postId\":\"p1\"}"))
+                        .content("{\"postId\":\"p1\"}"))
                 .andExpect(status().isOk());
 
         verify(likeService).deleteLike("u1", "p1");
+    }
+
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
     }
 }

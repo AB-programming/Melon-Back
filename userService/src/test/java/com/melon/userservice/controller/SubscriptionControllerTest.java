@@ -5,6 +5,7 @@ import com.melon.commonservice.config.ExceptionController;
 import com.melon.commonservice.config.GlobalController;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.userservice.service.SubscriptionService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -50,14 +51,20 @@ class SubscriptionControllerTest {
 
     @Test
     void addSubscription_returnsWrappedId() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(subscriptionService.addSubscription("u1", "u2")).thenReturn("sub_id");
 
         mockMvc.perform(post("/subscription")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"subscriber\":\"u1\",\"target\":\"u2\"}"))
+                        .content("{\"target\":\"u2\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value("sub_id"));
+    }
+
+    @AfterEach
+    void tearDown() {
+        JwtTestUtils.clearAuthentication();
     }
 
     @Test
@@ -72,22 +79,36 @@ class SubscriptionControllerTest {
 
     @Test
     void getMySubscriptions_returnsWrappedList() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         when(subscriptionService.getMySubscriptions("u1"))
                 .thenReturn(List.of(UserVo.builder().id("u2").username("username2").build()));
 
-        mockMvc.perform(get("/subscription/getMySubscriptions").param("subscriber", "u1"))
+        mockMvc.perform(get("/subscription/getMySubscriptions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data[0].id").value("u2"));
     }
 
     @Test
+    void isSubscribed_returnsWrappedBoolean() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
+        when(subscriptionService.isSubscribed("u1", "u2")).thenReturn(true);
+
+        mockMvc.perform(get("/subscription/isSubscribed").param("targetId", "u2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").value(true));
+    }
+
+    @Test
     void cancelSubscription_invokesService() throws Exception {
+        JwtTestUtils.setAuthenticatedUser("u1");
         mockMvc.perform(delete("/subscription")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"subscriber\":\"u1\",\"target\":\"u2\"}"))
+                        .content("{\"target\":\"u2\"}"))
                 .andExpect(status().isOk());
 
         verify(subscriptionService).deleteSubscription("u1", "u2");
     }
 }
+

@@ -2,6 +2,7 @@ package com.melon.postservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
 import com.melon.commonservice.pojo.vo.PageVo;
+import com.melon.commonservice.util.SecurityUtils;
 import com.melon.postservice.pojo.vo.PostVo;
 import com.melon.postservice.service.PostService;
 import jakarta.annotation.Resource;
@@ -25,14 +26,14 @@ public class PostController {
 
     @GetMapping("/getPostByIdWithUserId")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public PostVo getPostByIdWithUserId(@RequestParam("postId") String postId, @RequestParam("userId") String userId) throws ServerException {
-        return postService.getPostByIdWithUserId(postId, userId);
+    public PostVo getPostByIdWithUserId(@RequestParam("postId") String postId) throws ServerException {
+        return postService.getPostByIdWithUserId(postId, SecurityUtils.getCurrentUserId());
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public PostVo addPost(@RequestParam String userId, @RequestParam String content, @RequestParam MultipartFile[] images) throws ServerException {
-        return postService.addPost(userId, content, images);
+    public PostVo addPost(@RequestParam String content, @RequestParam MultipartFile[] images) throws ServerException {
+        return postService.addPost(SecurityUtils.getCurrentUserId(), content, images);
     }
 
     @GetMapping("/image")
@@ -53,21 +54,20 @@ public class PostController {
 
     @GetMapping("/selectFollowedPosts")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public List<PostVo> selectFollowedPosts(@RequestParam("userId") String userId) throws ServerException {
-        return postService.selectFollowedPosts(userId);
+    public List<PostVo> selectFollowedPosts() throws ServerException {
+        return postService.selectFollowedPosts(SecurityUtils.getCurrentUserId());
     }
 
     @DeleteMapping("/{postId}")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void deletePost(@PathVariable String postId) throws ServerException {
-        postService.deletePost(postId);
+        postService.deletePost(postId, SecurityUtils.getCurrentUserId());
     }
 
     @GetMapping("/searchPost")
     public PageVo<PostVo> searchPost(@RequestParam("keyword") String keyword,
                                      @RequestParam(value = "pageNum", defaultValue = "1") long pageNum,
-                                     @RequestParam(value = "pageSize", defaultValue = "10") long pageSize,
-                                     @RequestParam(value = "userId", required = false) String userId) {
-        return postService.searchPost(keyword, pageNum, pageSize, userId);
+                                     @RequestParam(value = "pageSize", defaultValue = "10") long pageSize) {
+        return postService.searchPost(keyword, pageNum, pageSize, SecurityUtils.getCurrentUserIdOrNull());
     }
 }
