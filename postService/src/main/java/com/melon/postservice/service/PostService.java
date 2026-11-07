@@ -1,6 +1,7 @@
 package com.melon.postservice.service;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.postservice.pojo.vo.PostVo;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,7 +15,8 @@ public interface PostService {
     List<PostVo> selectAllPost();
     List<PostVo> selectPostListWithUserId(String userId);
     List<PostVo> selectFollowedPosts(String userId) throws ServerException;
-    void deletePost(String postId) throws ServerException;
+    void deletePost(String postId, String currentUserId) throws ServerException;
     PostVo getPostById(String postId) throws ServerException;
     PostVo getPostByIdWithUserId(String postId, String userId) throws ServerException;
+    PageVo<PostVo> searchPost(String keyword, long pageNum, long pageSize, String userId);
 }

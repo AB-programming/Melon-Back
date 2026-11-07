@@ -1,12 +1,13 @@
 package com.melon.userservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.userservice.pojo.dto.NewUserDto;
 import com.melon.userservice.pojo.dto.UserDto;
 import com.melon.userservice.service.UserService;
+import com.melon.commonservice.util.SecurityUtils;
 import jakarta.annotation.Resource;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -28,15 +29,14 @@ public class UserController {
 
     @PostMapping("/uploadAvatar")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public String uploadAvatar(@NonNull @RequestParam("file") MultipartFile file, @RequestParam("userId") String userId) throws ServerException {
-        return userService.uploadAvatar(file, userId);
+    public String uploadAvatar(@NonNull @RequestParam("file") MultipartFile file) throws ServerException {
+        return userService.uploadAvatar(file, SecurityUtils.getCurrentUserId());
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping("/updateUser")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public UserVo updateUser(@PathVariable @Validated @NotBlank(message = "The userId cannot be empty") String userId,
-                             @RequestBody UserDto userDto) throws ServerException {
-        return userService.updateUser(userId, userDto);
+    public UserVo updateUser(@RequestBody @Validated UserDto userDto) throws ServerException {
+        return userService.updateUser(SecurityUtils.getCurrentUserId(), userDto);
     }
 
     @PostMapping("/createUser")
@@ -47,5 +47,12 @@ public class UserController {
     @GetMapping("/getUserListByIds")
     public Map<String, UserVo> getUserListByIds(@RequestParam("ids") List<String> ids) {
         return userService.getUserListByIds(ids);
+    }
+
+    @GetMapping("/searchUser")
+    public PageVo<UserVo> searchUser(@RequestParam("keyword") String keyword,
+                                     @RequestParam(value = "pageNum", defaultValue = "1") long pageNum,
+                                     @RequestParam(value = "pageSize", defaultValue = "10") long pageSize) {
+        return userService.searchUser(keyword, pageNum, pageSize);
     }
 }

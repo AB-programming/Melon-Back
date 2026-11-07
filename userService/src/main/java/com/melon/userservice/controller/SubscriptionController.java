@@ -2,6 +2,7 @@ package com.melon.userservice.controller;
 
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.util.SecurityUtils;
 import com.melon.userservice.pojo.dto.SubscriptionDto;
 import com.melon.userservice.service.SubscriptionService;
 import jakarta.annotation.Resource;
@@ -20,19 +21,19 @@ public class SubscriptionController {
     @PostMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public String addSubscription(@RequestBody @Validated SubscriptionDto subscriptionDto) throws ServerException {
-        return subscriptionService.addSubscription(subscriptionDto.getSubscriber(), subscriptionDto.getTarget());
+        return subscriptionService.addSubscription(SecurityUtils.getCurrentUserId(), subscriptionDto.getTarget());
     }
 
     @GetMapping("/isSubscribed")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public Boolean isSubscribed(@RequestParam("subscriber") String subscriber, @RequestParam("targetId") String targetId) {
-        return subscriptionService.isSubscribed(subscriber, targetId);
+    public Boolean isSubscribed(@RequestParam("targetId") String targetId) {
+        return subscriptionService.isSubscribed(SecurityUtils.getCurrentUserId(), targetId);
     }
 
     @DeleteMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void cancelSubscription(@RequestBody @Validated SubscriptionDto subscriptionDto) throws ServerException {
-        subscriptionService.deleteSubscription(subscriptionDto.getSubscriber(), subscriptionDto.getTarget());
+        subscriptionService.deleteSubscription(SecurityUtils.getCurrentUserId(), subscriptionDto.getTarget());
     }
 
     @GetMapping("/getFans")
@@ -42,7 +43,7 @@ public class SubscriptionController {
 
     @GetMapping("/getMySubscriptions")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public List<UserVo> getMySubscriptions(@RequestParam("subscriber") String subscriber) {
-        return subscriptionService.getMySubscriptions(subscriber);
+    public List<UserVo> getMySubscriptions() {
+        return subscriptionService.getMySubscriptions(SecurityUtils.getCurrentUserId());
     }
 }

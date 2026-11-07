@@ -1,5 +1,6 @@
 package com.melon.userservice;
 
+import com.melon.commonservice.config.MybatisPlusConfig;
 import com.melon.commonservice.config.SecurityConfig;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -8,7 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @MapperScan("com.melon.userservice.mapper")
-@ComponentScan(basePackages = "com.melon.userservice", basePackageClasses = SecurityConfig.class)
+@ComponentScan(basePackages = "com.melon.userservice", basePackageClasses = {SecurityConfig.class, MybatisPlusConfig.class})
 public class UserServiceApplication {
 
     public static void main(String[] args) {

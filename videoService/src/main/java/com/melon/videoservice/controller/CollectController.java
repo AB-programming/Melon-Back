@@ -1,6 +1,7 @@
 package com.melon.videoservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.util.SecurityUtils;
 import com.melon.videoservice.pojo.dto.CollectDto;
 import com.melon.videoservice.service.CollectService;
 import jakarta.annotation.Resource;
@@ -17,18 +18,18 @@ public class CollectController {
     @PostMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public String addCollect(@RequestBody @Validated CollectDto collectDto) throws ServerException {
-        return collectService.addCollect(collectDto.getUserId(), collectDto.getVideoId());
+        return collectService.addCollect(SecurityUtils.getCurrentUserId(), collectDto.getVideoId());
     }
 
     @DeleteMapping
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public void deleteCollect(@RequestBody @Validated CollectDto collectDto) throws ServerException {
-        collectService.deleteCollect(collectDto.getUserId(), collectDto.getVideoId());
+        collectService.deleteCollect(SecurityUtils.getCurrentUserId(), collectDto.getVideoId());
     }
 
     @GetMapping("/isCollect")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public Boolean isCollect(@RequestParam("userId") String userId, @RequestParam("videoId") String videoId) throws ServerException {
-        return collectService.exists(userId, videoId);
+    public Boolean isCollect(@RequestParam("videoId") String videoId) throws ServerException {
+        return collectService.exists(SecurityUtils.getCurrentUserId(), videoId);
     }
 }

@@ -17,6 +17,7 @@ import com.melon.videoservice.remote.UserRemote;
 import com.melon.videoservice.service.CommentService;
 import com.melon.videoservice.service.DeleteCommentProducer;
 import jakarta.annotation.Resource;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -141,7 +142,14 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public void deleteCommentByCommentId(String commentId) throws ServerException {
+    public void deleteCommentByCommentId(String commentId, String currentUserId) throws ServerException {
+        Comment comment = commentMapper.selectById(commentId);
+        if (Objects.isNull(comment)) {
+            throw new ServerException("Failed to delete the comment, please try again later");
+        }
+        if (!comment.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You can only delete your own comments");
+        }
         if (commentMapper.deleteById(commentId) <= 0) {
             throw new ServerException("Failed to delete the comment, please try again later");
         }

@@ -10,5 +10,5 @@ public interface CommentService {
 
     List<CommentVo> getCommentListByUserIdAndVideoId(String userId, String videoId) throws ServerException;
 
-    void deleteCommentByCommentId(String commentId) throws ServerException;
+    void deleteCommentByCommentId(String commentId, String currentUserId) throws ServerException;
 }

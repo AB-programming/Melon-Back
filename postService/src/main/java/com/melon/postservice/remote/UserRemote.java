@@ -5,7 +5,6 @@ import com.melon.commonservice.pojo.vo.UserVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -15,5 +14,5 @@ public interface UserRemote {
     HttpResult<UserVo> getUserById(@PathVariable("userId") String userId);
 
     @GetMapping("/subscription/getMySubscriptions")
-    HttpResult<List<UserVo>> getMySubscriptions(@RequestParam("subscriber") String subscriber);
+    HttpResult<List<UserVo>> getMySubscriptions();
 }

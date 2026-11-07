@@ -1,10 +1,12 @@
 package com.melon.videoservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.melon.baseservice.service.HdfsService;
 import com.melon.commonservice.common.HttpResponseStatus;
 import com.melon.commonservice.common.HttpResult;
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.videoservice.mapper.VideoMapper;
 import com.melon.videoservice.pojo.entity.Video;
@@ -21,6 +23,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -238,10 +241,13 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
-    public Boolean deleteVideo(String videoId) {
+    public Boolean deleteVideo(String videoId, String currentUserId) {
         Video video = videoMapper.selectById(videoId);
         if (Objects.isNull(video)) {
             return false;
+        }
+        if (!video.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You can only delete your own videos.");
         }
         if (videoMapper.deleteById(videoId) <= 0) {
             return false;
@@ -254,7 +260,7 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public List<VideoVo> selectFollowVideoList(String userId) {
-        HttpResult<List<UserVo>> subscriptionsResult = userRemote.getMySubscriptions(userId);
+        HttpResult<List<UserVo>> subscriptionsResult = userRemote.getMySubscriptions();
         if (HttpResponseStatus.OK.getCode() == subscriptionsResult.getCode()) {
             List<UserVo> userList = subscriptionsResult.getData();
             List<String> userIds = userList.stream()
@@ -283,5 +289,18 @@ public class VideoServiceImpl implements VideoService {
                     }
                     return builder.build();
                 }).toList();
+    }
+
+    @Override
+    public PageVo<VideoVo> searchVideo(String keyword, long pageNum, long pageSize) {
+        LambdaQueryWrapper<Video> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(Video::getTitle, keyword).or().like(Video::getDescription, keyword);
+        Page<Video> page = videoMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+        return PageVo.<VideoVo>builder()
+                .records(this.convertVideoListToVideoVoList(page.getRecords()))
+                .total(page.getTotal())
+                .pageNum(pageNum)
+                .pageSize(pageSize)
+                .build();
     }
 }

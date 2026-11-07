@@ -1,6 +1,8 @@
 package com.melon.videoservice.controller;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
+import com.melon.commonservice.util.SecurityUtils;
 import com.melon.videoservice.pojo.dto.ChunkDto;
 import com.melon.videoservice.pojo.vo.VideoVo;
 import com.melon.videoservice.service.VideoService;
@@ -27,10 +29,9 @@ public class VideoController {
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     @Validated
     public String createVideo(@RequestParam("picture") MultipartFile picture,
-                              @RequestParam("userId") @NotBlank(message = "The userId cannot be empty") String userId,
                               @RequestParam("title") @NotBlank(message = "The title cannot be empty") String title,
                               @RequestParam("description") String description) throws ServerException {
-        return videoService.createVideo(picture, userId, title, description);
+        return videoService.createVideo(picture, SecurityUtils.getCurrentUserId(), title, description);
     }
 
     @GetMapping("/{videoId}")
@@ -92,12 +93,19 @@ public class VideoController {
     @DeleteMapping("/{videoId}")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
     public Boolean deleteVideo(@PathVariable("videoId") String videoId) {
-        return videoService.deleteVideo(videoId);
+        return videoService.deleteVideo(videoId, SecurityUtils.getCurrentUserId());
     }
 
     @GetMapping("/getFollowVideoList")
     @PreAuthorize("hasAuthority('SCOPE_profile')")
-    public List<VideoVo> getFollowVideoList(@RequestParam("userId") String userId) throws ServerException {
-        return videoService.selectFollowVideoList(userId);
+    public List<VideoVo> getFollowVideoList() throws ServerException {
+        return videoService.selectFollowVideoList(SecurityUtils.getCurrentUserId());
+    }
+
+    @GetMapping("/searchVideo")
+    public PageVo<VideoVo> searchVideo(@RequestParam("keyword") String keyword,
+                                       @RequestParam(value = "pageNum", defaultValue = "1") long pageNum,
+                                       @RequestParam(value = "pageSize", defaultValue = "10") long pageSize) {
+        return videoService.searchVideo(keyword, pageNum, pageSize);
     }
 }

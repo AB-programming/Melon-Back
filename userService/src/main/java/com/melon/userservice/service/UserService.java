@@ -1,6 +1,7 @@
 package com.melon.userservice.service;
 
 import com.melon.commonservice.exception.ServerException;
+import com.melon.commonservice.pojo.vo.PageVo;
 import com.melon.commonservice.pojo.vo.UserVo;
 import com.melon.userservice.pojo.dto.UserDto;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,4 +19,6 @@ public interface UserService {
     UserVo createUser(String username, String password) throws ServerException;
 
     Map<String, UserVo> getUserListByIds(List<String> ids);
+
+    PageVo<UserVo> searchUser(String keyword, long pageNum, long pageSize);
 }
